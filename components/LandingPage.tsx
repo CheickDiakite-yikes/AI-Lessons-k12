@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, ArrowRight, BookOpen, Users, Printer, Star, ChevronDown, CheckCircle2, User } from 'lucide-react';
+import { PublicNav } from './PublicNav';
+import { PublicFooter } from './PublicFooter';
 
 export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
@@ -45,22 +47,9 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] overflow-x-hidden flex flex-col">
       {/* Navigation */}
-      <nav className="p-6 border-b-4 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-2xl font-serif font-black tracking-tight">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
-        </div>
-        <button 
-          onClick={onLaunch}
-          className="bg-[var(--color-deep-ink)] text-white px-6 py-2 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-sage-green)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-sage-green)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
-        >
-          Launch App
-        </button>
-      </nav>
+      <PublicNav onLaunch={onLaunch} />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-6 overflow-hidden">
@@ -216,26 +205,36 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 px-6 max-w-6xl mx-auto overflow-hidden">
-        <h2 className="text-5xl font-serif font-black mb-16 text-center uppercase">Wall of Love</h2>
-        <div className="flex gap-8 overflow-x-auto pb-8 snap-x snap-mandatory hide-scrollbar">
-          {testimonials.map((t, i) => (
-            <div key={i} className="min-w-[300px] md:min-w-[400px] bg-[var(--color-whisper-white)] border-4 border-[var(--color-deep-ink)] p-8 shadow-[8px_8px_0px_0px_var(--color-deep-ink)] snap-center shrink-0">
-              <div className="flex gap-1 mb-6">
-                {[...Array(5)].map((_, j) => <Star key={j} className="w-6 h-6 fill-[var(--color-gold-star)] text-[var(--color-deep-ink)]" />)}
+      <section className="py-24 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-5xl font-serif font-black mb-16 text-center uppercase">Wall of Love</h2>
+        </div>
+        <div className="relative w-full overflow-hidden pb-8">
+          <div className="flex w-max animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused]">
+            {[...Array(2)].map((_, arrayIndex) => (
+              <div key={arrayIndex} className="flex gap-6 md:gap-8 px-3 md:px-4">
+                {testimonials.map((t, i) => (
+                  <div key={`${arrayIndex}-${i}`} className="w-[85vw] sm:w-[400px] bg-[var(--color-whisper-white)] border-4 border-[var(--color-deep-ink)] p-6 md:p-8 shadow-[8px_8px_0px_0px_var(--color-deep-ink)] shrink-0 whitespace-normal flex flex-col justify-between">
+                    <div>
+                      <div className="flex gap-1 mb-6">
+                        {[...Array(5)].map((_, j) => <Star key={j} className="w-5 h-5 md:w-6 md:h-6 fill-[var(--color-gold-star)] text-[var(--color-deep-ink)]" />)}
+                      </div>
+                      <p className="text-lg md:text-xl font-medium mb-8 leading-relaxed">&quot;{t.quote}&quot;</p>
+                    </div>
+                    <div className="flex items-center gap-4 border-t-4 border-[var(--color-deep-ink)] pt-4 mt-auto">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-black text-base md:text-lg">{t.author}</p>
+                        <p className="text-[var(--color-charcoal-grey)] font-mono text-xs md:text-sm">{t.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="text-xl font-medium mb-8 leading-relaxed">&quot;{t.quote}&quot;</p>
-              <div className="flex items-center gap-4 border-t-4 border-[var(--color-deep-ink)] pt-4">
-                <div className="w-12 h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-black text-lg">{t.author}</p>
-                  <p className="text-[var(--color-charcoal-grey)] font-mono text-sm">{t.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -274,21 +273,7 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[var(--color-deep-ink)] text-white py-12 px-6 border-t-4 border-black">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[var(--color-sage-green)] border-2 border-white rounded-full flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-serif font-black tracking-tight">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
-          </div>
-          <p className="text-[var(--color-concrete-light)] font-mono text-sm">© {new Date().getFullYear()} LessonCraft. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-[var(--color-sage-green)] transition-colors font-bold">Twitter</a>
-            <a href="#" className="hover:text-[var(--color-sage-green)] transition-colors font-bold">Contact</a>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes marquee {
