@@ -6,6 +6,9 @@ import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, Pen
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
+import { useAuth } from '@/components/AuthProvider';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
 const GRADE_LEVELS = ['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'];
@@ -385,6 +388,8 @@ export function LessonPlanner() {
                 >
                   {profilePic ? (
                     <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                  ) : user?.photoURL ? (
+                    <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-8 h-8 text-[var(--color-deep-ink)]" />
                   )}
@@ -400,9 +405,17 @@ export function LessonPlanner() {
                   className="hidden" 
                 />
               </div>
-              <h1 className="text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
-                Teacher Profile
-              </h1>
+              <div className="flex flex-col">
+                <h1 className="text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
+                  {profile?.name || user?.displayName || 'Teacher Profile'}
+                </h1>
+                <button 
+                  onClick={() => signOut(auth)}
+                  className="text-sm text-red-600 font-bold hover:underline self-start mt-1"
+                >
+                  Log Out
+                </button>
+              </div>
             </div>
           </div>
 
@@ -931,6 +944,8 @@ export function LessonPlanner() {
             >
               {profilePic ? (
                 <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : user?.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-5 h-5 text-[var(--color-deep-ink)]" />
               )}
