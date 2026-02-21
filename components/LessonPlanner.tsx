@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus } from 'lucide-react';
+import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -50,11 +50,21 @@ export function LessonPlanner() {
   
   // Class Management State
   const [classes, setClasses] = useState<ClassRoster[]>([
-    { id: '1', name: '5th Grade Science (Period 1)', students: [] },
+    { 
+      id: '1', 
+      name: '5th Grade Science (Period 1)', 
+      students: [
+        { id: 's1', name: 'Emma Thompson', englishProficiency: 'Expanding', readingLevel: 'Above Grade', mathLevel: 'At Grade', writingLevel: 'At Grade', academicLevel: 'At Grade', learningPreference: 'Visual' },
+        { id: 's2', name: 'Liam Garcia', englishProficiency: 'Developing', readingLevel: 'Below Grade', mathLevel: 'At Grade', writingLevel: 'Below Grade', academicLevel: 'Below Grade', learningPreference: 'Kinesthetic' },
+        { id: 's3', name: 'Noah Patel', englishProficiency: 'Bridging', readingLevel: 'At Grade', mathLevel: 'Above Grade', writingLevel: 'At Grade', academicLevel: 'At Grade', learningPreference: 'Auditory' }
+      ] 
+    },
     { id: '2', name: '5th Grade Math (Period 2)', students: [] },
     { id: '3', name: '6th Grade Science (Period 4)', students: [] }
   ]);
   const [newClassName, setNewClassName] = useState('');
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
+  const [editingClassName, setEditingClassName] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedClassIdForRoster, setSelectedClassIdForRoster] = useState<string | null>(null);
   
@@ -76,6 +86,7 @@ export function LessonPlanner() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
+  const rosterRef = useRef<HTMLDivElement>(null);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -200,6 +211,21 @@ export function LessonPlanner() {
     }
   };
 
+  const handleStartEditClass = (cls: ClassRoster) => {
+    setEditingClassId(cls.id);
+    setEditingClassName(cls.name);
+  };
+
+  const handleSaveEditClass = () => {
+    if (editingClassName.trim() && editingClassId) {
+      setClasses(classes.map(c => 
+        c.id === editingClassId ? { ...c, name: editingClassName.trim() } : c
+      ));
+    }
+    setEditingClassId(null);
+    setEditingClassName('');
+  };
+
   const handleDeleteClass = (classIdToDelete: string) => {
     setClasses(classes.filter(c => c.id !== classIdToDelete));
     if (selectedClassId === classIdToDelete) {
@@ -251,6 +277,15 @@ export function LessonPlanner() {
     }));
   };
 
+  const handleSelectClassForRoster = (classId: string) => {
+    if (editingClassId !== classId) {
+      setSelectedClassIdForRoster(classId);
+      setTimeout(() => {
+        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
   if (currentView === 'profile') {
     return (
       <div className="min-h-screen bg-[var(--color-whisper-white)] p-4 md:p-8">
@@ -293,9 +328,9 @@ export function LessonPlanner() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Classes & Rosters */}
-            <div className="lg:col-span-1 space-y-8">
-              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
+            {/* My Classes */}
+            <div className="lg:col-start-1 lg:row-start-1 order-1">
+              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full flex flex-col">
                 <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5" /> My Classes
                 </h2>
@@ -319,50 +354,66 @@ export function LessonPlanner() {
                   </button>
                 </div>
 
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 flex-1">
                   {classes.length === 0 ? (
                     <p className="text-sm text-[var(--color-charcoal-grey)] italic">No classes added yet.</p>
                   ) : (
                     classes.map((cls) => (
-                      <div key={cls.id} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] flex justify-between items-center group cursor-pointer hover:bg-[var(--color-sage-green)] hover:text-white transition-colors" onClick={() => setSelectedClassIdForRoster(cls.id)}>
-                        <div className="flex flex-col overflow-hidden mr-2">
-                          <span className="font-bold text-sm truncate">{cls.name}</span>
-                          <span className="text-xs opacity-80">{cls.students.length} Students</span>
-                        </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.id); }}
-                          className="text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                          aria-label="Delete class"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div 
+                        key={cls.id} 
+                        className={`p-3 border-2 border-[var(--color-deep-ink)] flex justify-between items-center group cursor-pointer transition-colors ${selectedClassIdForRoster === cls.id ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-soft-clay)] hover:bg-[var(--color-sage-green)] hover:text-white'}`}
+                        onClick={() => handleSelectClassForRoster(cls.id)}
+                      >
+                        {editingClassId === cls.id ? (
+                          <div className="flex-1 flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
+                            <input 
+                              type="text" 
+                              value={editingClassName}
+                              onChange={(e) => setEditingClassName(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveEditClass()}
+                              className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-1 text-sm font-sans text-black focus:outline-none focus:border-[var(--color-sage-green)]"
+                              autoFocus
+                            />
+                            <button 
+                              onClick={handleSaveEditClass}
+                              className="text-[var(--color-deep-ink)] hover:text-[var(--color-sage-green)] p-1"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex flex-col overflow-hidden mr-2">
+                              <span className="font-bold text-sm truncate">{cls.name}</span>
+                              <span className="text-xs opacity-80">{cls.students.length} Students</span>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleStartEditClass(cls); }}
+                                className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-[var(--color-deep-ink)]' : 'text-[var(--color-charcoal-grey)] hover:text-white'}`}
+                                aria-label="Edit class"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.id); }}
+                                className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-red-300' : 'text-[var(--color-charcoal-grey)] hover:text-red-300'}`}
+                                aria-label="Delete class"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   )}
                 </div>
               </div>
-
-              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
-                <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
-                  <Save className="w-5 h-5" /> Saved Plans
-                </h2>
-                <div className="space-y-3">
-                  {[
-                    { title: 'The Water Cycle Adventure', date: 'Oct 12' },
-                    { title: 'Fractions in the Real World', date: 'Oct 10' },
-                    { title: 'Introduction to Ecosystems', date: 'Oct 05' }
-                  ].map((plan, i) => (
-                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] flex justify-between items-center cursor-pointer hover:border-[var(--color-sage-green)] transition-colors">
-                      <span className="font-bold text-sm truncate mr-2">{plan.title}</span>
-                      <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">{plan.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Right Column: Calendar View or Roster View */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-start-2 lg:col-span-2 lg:row-start-1 lg:row-span-2 order-2" ref={rosterRef}>
               {selectedClassIdForRoster ? (
                 <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full flex flex-col">
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -543,6 +594,27 @@ export function LessonPlanner() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Saved Plans */}
+            <div className="lg:col-start-1 lg:row-start-2 order-3">
+              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full">
+                <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
+                  <Save className="w-5 h-5" /> Saved Plans
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { title: 'The Water Cycle Adventure', date: 'Oct 12' },
+                    { title: 'Fractions in the Real World', date: 'Oct 10' },
+                    { title: 'Introduction to Ecosystems', date: 'Oct 05' }
+                  ].map((plan, i) => (
+                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] flex justify-between items-center cursor-pointer hover:border-[var(--color-sage-green)] transition-colors">
+                      <span className="font-bold text-sm truncate mr-2">{plan.title}</span>
+                      <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">{plan.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
