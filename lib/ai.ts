@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 export async function generateLessonPlan(params: {
-  planType: string;
+  planLength: string;
   gradeLevel: string;
   subject: string;
   duration: string;
@@ -22,7 +22,7 @@ export async function generateLessonPlan(params: {
     You are an expert curriculum designer and master teacher. 
     Create a highly engaging, detailed, and beautifully structured lesson plan with the following parameters:
     
-    - Plan Type: ${params.planType}
+    - Plan Length: ${params.planLength}
     - Grade Level: ${params.gradeLevel}
     - Subject: ${params.subject}
     - Lesson Duration: ${params.duration} minutes

@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
 
-const PLAN_TYPES = ['Single Lesson', '1-4 Weeks', 'One Quarter', 'One Semester'];
+const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
 const GRADE_LEVELS = ['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'];
 const SUBJECTS = ['Math', 'Science', 'English/Language Arts', 'Social Studies', 'ESL', 'Art', 'Music', 'Physical Education', 'Special Education'];
 const ENGLISH_PROFICIENCY = ['Entering', 'Emerging', 'Developing', 'Expanding', 'Bridging'];
@@ -33,8 +33,84 @@ type ClassRoster = {
   students: Student[];
 };
 
+function CustomSelect({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (val: string) => void; 
+  options: { label: string; value: string }[]; 
+  placeholder?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div className="relative" ref={ref}>
+      <div 
+        className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] p-3 md:p-3 font-sans text-lg md:text-base cursor-pointer shadow-[2px_2px_0px_0px_var(--color-deep-ink)] flex items-center justify-between"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className={selectedOption ? 'text-[var(--color-deep-ink)]' : 'text-[var(--color-charcoal-grey)]'}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown className={`w-5 h-5 text-[var(--color-deep-ink)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute z-50 w-full mt-2 bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] max-h-60 overflow-y-auto"
+          >
+            {placeholder && (
+              <div 
+                className={`p-3 cursor-pointer hover:bg-[var(--color-sage-green)] hover:text-white transition-colors border-b-2 border-[var(--color-deep-ink)] text-[var(--color-charcoal-grey)] ${!value ? 'bg-[var(--color-soft-clay)] font-bold' : ''}`}
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
+              >
+                {placeholder}
+              </div>
+            )}
+            {options.map(opt => (
+              <div 
+                key={opt.value}
+                className={`p-3 cursor-pointer hover:bg-[var(--color-sage-green)] hover:text-white transition-colors border-b-2 border-[var(--color-deep-ink)] last:border-b-0 ${value === opt.value ? 'bg-[var(--color-soft-clay)] font-bold' : ''}`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function LessonPlanner() {
-  const [planType, setPlanType] = useState(PLAN_TYPES[0]);
+  const [planLength, setPlanLength] = useState(PLAN_LENGTHS[0]);
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[5]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
   const [duration, setDuration] = useState('45');
@@ -108,7 +184,7 @@ export function LessonPlanner() {
       }
 
       const plan = await generateLessonPlan({
-        planType,
+        planLength,
         gradeLevel,
         subject,
         duration,
@@ -665,63 +741,43 @@ export function LessonPlanner() {
           {classes.length > 0 && (
             <div className="space-y-2">
               <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Target Class (Optional)</label>
-              <div className="relative">
-                <select 
-                  value={selectedClassId}
-                  onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-                >
-                  <option value="">-- Select a Class --</option>
-                  {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
-              </div>
+              <CustomSelect 
+                value={selectedClassId}
+                onChange={setSelectedClassId}
+                options={classes.map(cls => ({ label: cls.name, value: cls.id }))}
+                placeholder="-- Select a Class --"
+              />
             </div>
           )}
 
-          {/* Plan Type */}
+          {/* Plan Length */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Plan Type</label>
-            <div className="relative">
-              <select 
-                value={planType}
-                onChange={(e) => setPlanType(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-              >
-                {PLAN_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
-            </div>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Plan Length</label>
+            <CustomSelect 
+              value={planLength}
+              onChange={setPlanLength}
+              options={PLAN_LENGTHS.map(pl => ({ label: pl, value: pl }))}
+            />
           </div>
 
           {/* Grade Level */}
           <div className="space-y-2">
             <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Grade Level</label>
-            <div className="relative">
-              <select 
-                value={gradeLevel}
-                onChange={(e) => setGradeLevel(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-              >
-                {GRADE_LEVELS.map(gl => <option key={gl} value={gl}>{gl}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
-            </div>
+            <CustomSelect 
+              value={gradeLevel}
+              onChange={setGradeLevel}
+              options={GRADE_LEVELS.map(gl => ({ label: gl, value: gl }))}
+            />
           </div>
 
           {/* Subject */}
           <div className="space-y-2">
             <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Subject</label>
-            <div className="relative">
-              <select 
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-              >
-                {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
-            </div>
+            <CustomSelect 
+              value={subject}
+              onChange={setSubject}
+              options={SUBJECTS.map(s => ({ label: s, value: s }))}
+            />
           </div>
 
           {/* Duration */}
