@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X } from 'lucide-react';
+import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -24,6 +24,10 @@ export function LessonPlanner() {
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualObjectives, setManualObjectives] = useState('');
   const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentView, setCurrentView] = useState<'planner' | 'profile'>('planner');
+  const [profilePic, setProfilePic] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
@@ -115,6 +119,7 @@ export function LessonPlanner() {
 
   const handleSave = () => {
     triggerConfetti();
+    setIsMobileMenuOpen(false);
     // In a real app, save to database
   };
 
@@ -125,6 +130,135 @@ export function LessonPlanner() {
       setState([...state, item]);
     }
   };
+
+  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePic(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  if (currentView === 'profile') {
+    return (
+      <div className="min-h-screen bg-[var(--color-whisper-white)] p-4 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Top Bar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b-2 border-[var(--color-deep-ink)] gap-4">
+            <button 
+              onClick={() => setCurrentView('planner')}
+              className="flex items-center gap-2 px-4 py-2 font-bold text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] transition-colors rounded-lg self-start md:self-auto"
+            >
+              <ArrowLeft className="w-5 h-5" /> Back to Planner
+            </button>
+            <div className="flex items-center gap-4 self-start md:self-auto">
+              <div className="relative group">
+                <div 
+                  className="w-16 h-16 rounded-full border-2 border-[var(--color-deep-ink)] bg-[var(--color-blush-pink)] overflow-hidden flex items-center justify-center cursor-pointer shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {profilePic ? (
+                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-[var(--color-deep-ink)]" />
+                  )}
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleProfilePicChange} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+              </div>
+              <h1 className="text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
+                Teacher Profile
+              </h1>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Classes & Rosters */}
+            <div className="lg:col-span-1 space-y-8">
+              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
+                <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" /> My Classes
+                </h2>
+                <div className="space-y-3">
+                  {['5th Grade Science (Period 1)', '5th Grade Math (Period 2)', '6th Grade Science (Period 4)'].map((cls, i) => (
+                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] hover:bg-[var(--color-sage-green)] hover:text-white transition-colors cursor-pointer font-bold text-sm">
+                      {cls}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
+                <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
+                  <Save className="w-5 h-5" /> Saved Plans
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { title: 'The Water Cycle Adventure', date: 'Oct 12' },
+                    { title: 'Fractions in the Real World', date: 'Oct 10' },
+                    { title: 'Introduction to Ecosystems', date: 'Oct 05' }
+                  ].map((plan, i) => (
+                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] flex justify-between items-center cursor-pointer hover:border-[var(--color-sage-green)] transition-colors">
+                      <span className="font-bold text-sm truncate mr-2">{plan.title}</span>
+                      <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">{plan.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Calendar View */}
+            <div className="lg:col-span-2">
+              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
+                    <Calendar className="w-6 h-6" /> Lesson Calendar
+                  </h2>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white font-bold text-sm">Month</button>
+                    <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">Week</button>
+                  </div>
+                </div>
+
+                {/* Mock Calendar Grid */}
+                <div className="grid grid-cols-5 gap-2 md:gap-4">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                    <div key={day} className="text-center font-bold text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-2">{day}</div>
+                  ))}
+                  
+                  {/* Calendar Days */}
+                  {[...Array(20)].map((_, i) => {
+                    const hasLesson = i === 2 || i === 7 || i === 14;
+                    return (
+                      <div key={i} className={`aspect-square border-2 border-[var(--color-concrete-light)] p-1 md:p-2 relative ${hasLesson ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)]' : 'bg-[var(--color-whisper-white)]'}`}>
+                        <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">{i + 1}</span>
+                        {hasLesson && (
+                          <div className="absolute bottom-1 md:bottom-2 left-1 md:left-2 right-1 md:right-2 bg-[var(--color-sage-green)] text-white text-[10px] md:text-xs font-bold p-1 truncate border border-[var(--color-deep-ink)]">
+                            Science Unit
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[var(--color-whisper-white)]">
@@ -313,16 +447,63 @@ export function LessonPlanner() {
             </button>
             <h2 className="font-serif font-bold text-lg md:text-xl text-[var(--color-deep-ink)] truncate">The Lesson Masterpiece</h2>
           </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            <button onClick={handleSave} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span>
+          <div className="flex items-center gap-2 md:gap-4 relative">
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-4">
+              <button onClick={handleSave} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+                <Save className="w-4 h-4" /> <span>Save</span>
+              </button>
+              <button onClick={handleExportPDF} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+                <Printer className="w-4 h-4" /> <span>Export PDF</span>
+              </button>
+              <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+                <Share2 className="w-4 h-4" /> <span>Share</span>
+              </button>
+            </div>
+
+            {/* Profile Button (Desktop & Mobile) */}
+            <button 
+              onClick={() => setCurrentView('profile')}
+              className="flex items-center justify-center w-10 h-10 border-2 border-[var(--color-deep-ink)] bg-[var(--color-blush-pink)] hover:bg-[#ffb0bd] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none rounded-full overflow-hidden p-0"
+              aria-label="Profile"
+            >
+              {profilePic ? (
+                <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-5 h-5 text-[var(--color-deep-ink)]" />
+              )}
             </button>
-            <button onClick={handleExportPDF} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Printer className="w-4 h-4" /> <span className="hidden sm:inline">Export PDF</span>
+
+            {/* Mobile Dropdown Menu Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+              aria-label="More actions"
+            >
+              <MoreVertical className="w-5 h-5" />
             </button>
-            <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Share2 className="w-4 h-4" /> <span className="hidden sm:inline">Share</span>
-            </button>
+
+            {/* Mobile Dropdown Content */}
+            <AnimatePresence>
+              {isMobileMenuOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full right-0 mt-2 w-48 bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] flex flex-col z-50 md:hidden"
+                >
+                  <button onClick={handleSave} className="flex items-center gap-3 px-4 py-3 font-bold text-sm border-b-2 border-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] text-left">
+                    <Save className="w-4 h-4" /> Save Plan
+                  </button>
+                  <button onClick={() => { handleExportPDF(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 font-bold text-sm border-b-2 border-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] text-left">
+                    <Printer className="w-4 h-4" /> Export PDF
+                  </button>
+                  <button onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 font-bold text-sm hover:bg-[var(--color-soft-clay)] text-left">
+                    <Share2 className="w-4 h-4" /> Share Link
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
