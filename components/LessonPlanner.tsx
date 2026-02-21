@@ -114,8 +114,8 @@ export function LessonPlanner() {
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[5]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
   const [duration, setDuration] = useState('45');
-  const [englishProficiency, setEnglishProficiency] = useState<string[]>(['Expanding']);
-  const [academicLevels, setAcademicLevels] = useState<string[]>(['At Grade']);
+  const [englishProficiency, setEnglishProficiency] = useState<string[]>([]);
+  const [academicLevels, setAcademicLevels] = useState<string[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualObjectives, setManualObjectives] = useState('');
   const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
@@ -792,44 +792,48 @@ export function LessonPlanner() {
           </div>
 
           {/* English Proficiency */}
-          <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">English Proficiency</label>
-            <div className="flex flex-wrap gap-2">
-              {ENGLISH_PROFICIENCY.map(ep => (
-                <button
-                  key={ep}
-                  onClick={() => toggleMultiSelect(ep, englishProficiency, setEnglishProficiency)}
-                  className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
-                    englishProficiency.includes(ep) 
-                      ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
-                      : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
-                  }`}
-                >
-                  {ep} {englishProficiency.includes(ep) && '✓'}
-                </button>
-              ))}
+          {!selectedClassId && (
+            <div className="space-y-2">
+              <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">English Proficiency (Optional)</label>
+              <div className="flex flex-wrap gap-2">
+                {ENGLISH_PROFICIENCY.map(ep => (
+                  <button
+                    key={ep}
+                    onClick={() => toggleMultiSelect(ep, englishProficiency, setEnglishProficiency)}
+                    className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
+                      englishProficiency.includes(ep) 
+                        ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
+                        : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
+                    }`}
+                  >
+                    {ep} {englishProficiency.includes(ep) && '✓'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Academic Levels */}
-          <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Academic Levels</label>
-            <div className="flex flex-wrap gap-2">
-              {ACADEMIC_LEVELS.map(al => (
-                <button
-                  key={al}
-                  onClick={() => toggleMultiSelect(al, academicLevels, setAcademicLevels)}
-                  className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
-                    academicLevels.includes(al) 
-                      ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
-                      : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
-                  }`}
-                >
-                  {al} {academicLevels.includes(al) && '✓'}
-                </button>
-              ))}
+          {!selectedClassId && (
+            <div className="space-y-2">
+              <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Academic Levels (Optional)</label>
+              <div className="flex flex-wrap gap-2">
+                {ACADEMIC_LEVELS.map(al => (
+                  <button
+                    key={al}
+                    onClick={() => toggleMultiSelect(al, academicLevels, setAcademicLevels)}
+                    className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
+                      academicLevels.includes(al) 
+                        ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
+                        : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
+                    }`}
+                  >
+                    {al} {academicLevels.includes(al) && '✓'}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Auto Generate Toggle */}
           <div className="flex items-center justify-between p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
