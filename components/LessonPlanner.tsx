@@ -147,69 +147,69 @@ export function LessonPlanner() {
         <div className="p-6 space-y-8 flex-1">
           {/* Plan Type */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Plan Type</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Plan Type</label>
             <div className="relative">
               <select 
                 value={planType}
                 onChange={(e) => setPlanType(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 pr-10 font-sans focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
               >
                 {PLAN_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
+              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
             </div>
           </div>
 
           {/* Grade Level */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Grade Level</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Grade Level</label>
             <div className="relative">
               <select 
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 pr-10 font-sans focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
               >
                 {GRADE_LEVELS.map(gl => <option key={gl} value={gl}>{gl}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
+              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
             </div>
           </div>
 
           {/* Subject */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Subject</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Subject</label>
             <div className="relative">
               <select 
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 pr-10 font-sans focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+                className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
               >
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              <ChevronDown className="absolute right-3 top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
+              <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
             </div>
           </div>
 
           {/* Duration */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Lesson Duration (mins)</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Lesson Duration (mins)</label>
             <input 
               type="number" 
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 font-sans focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+              className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
             />
           </div>
 
           {/* English Proficiency */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">English Proficiency</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">English Proficiency</label>
             <div className="flex flex-wrap gap-2">
               {ENGLISH_PROFICIENCY.map(ep => (
                 <button
                   key={ep}
                   onClick={() => toggleMultiSelect(ep, englishProficiency, setEnglishProficiency)}
-                  className={`px-3 py-1.5 border-2 border-[var(--color-deep-ink)] text-sm font-bold transition-all ${
+                  className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
                     englishProficiency.includes(ep) 
                       ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
                       : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
@@ -223,13 +223,13 @@ export function LessonPlanner() {
 
           {/* Academic Levels */}
           <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Academic Levels</label>
+            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Academic Levels</label>
             <div className="flex flex-wrap gap-2">
               {ACADEMIC_LEVELS.map(al => (
                 <button
                   key={al}
                   onClick={() => toggleMultiSelect(al, academicLevels, setAcademicLevels)}
-                  className={`px-3 py-1.5 border-2 border-[var(--color-deep-ink)] text-sm font-bold transition-all ${
+                  className={`px-4 py-2 md:px-3 md:py-1.5 border-2 border-[var(--color-deep-ink)] text-base md:text-sm font-bold transition-all ${
                     academicLevels.includes(al) 
                       ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-2px] translate-x-[-2px]' 
                       : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)]'
@@ -244,14 +244,14 @@ export function LessonPlanner() {
           {/* Auto Generate Toggle */}
           <div className="flex items-center justify-between p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[var(--color-gold-star)]" />
-              <span className="font-bold text-[var(--color-deep-ink)] text-sm">Auto-Generate Objectives</span>
+              <Sparkles className="w-6 h-6 md:w-5 md:h-5 text-[var(--color-gold-star)]" />
+              <span className="font-bold text-[var(--color-deep-ink)] text-base md:text-sm">Auto-Generate Objectives</span>
             </div>
             <button 
               onClick={() => setAutoGenerate(!autoGenerate)}
-              className={`w-12 h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${autoGenerate ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
+              className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${autoGenerate ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
             >
-              <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${autoGenerate ? 'translate-x-6' : 'translate-x-0'}`} />
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${autoGenerate ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
 
@@ -264,11 +264,11 @@ export function LessonPlanner() {
                 exit={{ opacity: 0, height: 0 }}
                 className="space-y-2 overflow-hidden"
               >
-                <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-sm">Manual Objectives & Topics</label>
+                <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Manual Objectives & Topics</label>
                 <textarea 
                   value={manualObjectives}
                   onChange={(e) => setManualObjectives(e.target.value)}
-                  className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 font-sans focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] min-h-[100px]"
+                  className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] min-h-[100px]"
                   placeholder="Enter learning objectives and topics here..."
                   id="manual-objectives"
                 />
@@ -282,16 +282,16 @@ export function LessonPlanner() {
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="w-full bg-[var(--color-sage-green)] text-white font-bold py-4 px-6 border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[var(--color-sage-green)] text-white font-bold py-4 px-6 text-lg border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isGenerating ? (
               <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
+                <RefreshCw className="w-6 h-6 animate-spin" />
                 Crafting Lesson...
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-6 h-6" />
                 Generate Lesson Plan
               </>
             )}
@@ -327,22 +327,22 @@ export function LessonPlanner() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8 md:p-12 relative" style={{
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 relative" style={{
           backgroundImage: 'linear-gradient(var(--color-concrete-light) 1px, transparent 1px), linear-gradient(90deg, var(--color-concrete-light) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           backgroundPosition: '-1px -1px',
           opacity: 0.8
         }}>
-          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-10 relative z-10" ref={contentRef}>
+          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-6 md:p-10 relative z-10" ref={contentRef}>
             
             {/* Binder Rings Decoration */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 border-r-2 border-[var(--color-deep-ink)] flex flex-col justify-evenly items-center bg-[var(--color-soft-clay)]">
+            <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 border-r-2 border-[var(--color-deep-ink)] flex flex-col justify-evenly items-center bg-[var(--color-soft-clay)]">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-4 h-4 rounded-full bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] shadow-inner"></div>
+                <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] shadow-inner"></div>
               ))}
             </div>
 
-            <div className="pl-6">
+            <div className="pl-8 md:pl-10">
               <AnimatePresence mode="wait">
                 {isGenerating ? (
                   <motion.div 
@@ -350,25 +350,25 @@ export function LessonPlanner() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex flex-col items-center justify-center h-full py-32 text-center"
+                    className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center"
                   >
-                    <div className="relative w-32 h-32 mb-8">
+                    <div className="relative w-24 h-24 md:w-32 md:h-32 mb-8">
                       <motion.div 
                         animate={{ rotate: 360 }}
                         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                         className="absolute inset-0 border-4 border-dashed border-[var(--color-sage-green)] rounded-full"
                       />
-                      <Sparkles className="absolute inset-0 m-auto w-12 h-12 text-[var(--color-gold-star)]" />
+                      <Sparkles className="absolute inset-0 m-auto w-10 h-10 md:w-12 md:h-12 text-[var(--color-gold-star)]" />
                     </div>
-                    <h3 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-4">Gemini Pro is crafting your {subject} plan...</h3>
-                    <p className="text-[var(--color-charcoal-grey)] font-mono text-sm max-w-md">Analyzing grade level, differentiating for English proficiency, and structuring engaging activities.</p>
+                    <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-4">Gemini Pro is crafting your {subject} plan...</h3>
+                    <p className="text-[var(--color-charcoal-grey)] font-mono text-sm md:text-base max-w-md">Analyzing grade level, differentiating for English proficiency, and structuring engaging activities.</p>
                   </motion.div>
                 ) : generatedPlan ? (
                   <motion.div 
                     key="content"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="prose max-w-none"
+                    className="prose prose-lg md:prose-xl max-w-none"
                   >
                     {/* Render Image if available */}
                     {(generatedImage || isGeneratingImage) && (
@@ -380,7 +380,7 @@ export function LessonPlanner() {
                         ) : (
                           <img src={generatedImage!} alt="Lesson Plan Illustration" className="w-full h-auto object-cover border-2 border-[var(--color-deep-ink)]" />
                         )}
-                        <p className="text-xs font-mono text-[var(--color-charcoal-grey)] mt-2 text-center italic">
+                        <p className="text-xs md:text-sm font-mono text-[var(--color-charcoal-grey)] mt-2 text-center italic">
                           {imagePrompt}
                         </p>
                       </div>
@@ -391,10 +391,10 @@ export function LessonPlanner() {
                     </div>
                   </motion.div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-32 text-center opacity-50">
-                    <PenLine className="w-16 h-16 text-[var(--color-deep-ink)] mb-6" />
-                    <h3 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-2">Ready to Plan</h3>
-                    <p className="text-[var(--color-charcoal-grey)] font-sans max-w-md">Fill out the details in the Input Journal on the left and click Generate to create your masterpiece.</p>
+                  <div className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center opacity-50">
+                    <PenLine className="w-12 h-12 md:w-16 md:h-16 text-[var(--color-deep-ink)] mb-6" />
+                    <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-2">Ready to Plan</h3>
+                    <p className="text-[var(--color-charcoal-grey)] font-sans text-base md:text-lg max-w-md">Fill out the details in the Input Journal on the left and click Generate to create your masterpiece.</p>
                   </div>
                 )}
               </AnimatePresence>
