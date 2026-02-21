@@ -5,11 +5,11 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] flex flex-col">
       <PublicNav />
-      <main className="flex-1 py-24 px-6 max-w-4xl mx-auto w-full">
-        <div className="bg-[var(--color-crisp-page)] border-4 border-[var(--color-deep-ink)] p-8 md:p-12 shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
+      <main className="flex-1 md:py-24 md:px-6 max-w-4xl mx-auto w-full">
+        <div className="bg-[var(--color-crisp-page)] border-b-4 md:border-4 border-[var(--color-deep-ink)] p-6 md:p-12 md:shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
           <h1 className="text-5xl font-serif font-black mb-8 uppercase">Terms of Service</h1>
           <div className="space-y-6 text-lg text-[var(--color-charcoal-grey)] font-medium leading-relaxed">
-            <p>Last updated: {new Date().toLocaleDateString()}</p>
+            <p>Last updated: February 21, 2026</p>
             <h2 className="text-2xl font-black text-[var(--color-deep-ink)] mt-8 mb-4 uppercase">1. Acceptance of Terms</h2>
             <p>By accessing or using LessonCraft, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
             

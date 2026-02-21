@@ -16,7 +16,7 @@ export function PublicFooter() {
             Empowering educators with AI-driven, highly differentiated lesson planning. Craft lessons, not stress.
           </p>
           <p className="text-[var(--color-charcoal-grey)] font-mono text-sm">
-            © {new Date().getFullYear()} LessonCraft. All rights reserved.
+            © 2026 LessonCraft. All rights reserved.
           </p>
         </div>
         
