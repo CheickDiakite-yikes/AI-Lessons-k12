@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon } from 'lucide-react';
+import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -23,6 +23,7 @@ export function LessonPlanner() {
   const [academicLevels, setAcademicLevels] = useState<string[]>(['At Grade']);
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualObjectives, setManualObjectives] = useState('');
+  const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
@@ -34,6 +35,7 @@ export function LessonPlanner() {
 
   const handleGenerate = async () => {
     setIsGenerating(true);
+    setIsInputPanelOpen(false);
     setGeneratedPlan(null);
     setGeneratedImage(null);
     setImagePrompt(null);
@@ -127,12 +129,19 @@ export function LessonPlanner() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[var(--color-whisper-white)]">
       {/* Left Panel - Input Journal */}
-      <div className="w-full md:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex flex-col h-screen sticky top-0 overflow-y-auto shadow-[4px_0px_0px_0px_var(--color-deep-ink)] z-10">
-        <div className="p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20">
+      <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} md:flex w-full md:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-screen sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-20`}>
+        <div className="p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between">
           <h1 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
             <PenLine className="w-6 h-6" />
             The Input Journal
           </h1>
+          <button 
+            onClick={() => setIsInputPanelOpen(false)}
+            className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+            aria-label="Close input panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         
         <div className="p-6 space-y-8 flex-1">
@@ -291,19 +300,28 @@ export function LessonPlanner() {
       </div>
 
       {/* Right Panel - Output Area */}
-      <div className="w-full md:w-3/4 flex flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative">
+      <div className={`${isInputPanelOpen ? 'hidden' : 'flex'} md:flex w-full md:w-3/4 flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative`}>
         {/* Top Action Bar */}
-        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-6 shrink-0 z-10">
-          <h2 className="font-serif font-bold text-xl text-[var(--color-deep-ink)]">The Lesson Masterpiece</h2>
-          <div className="flex items-center gap-4">
-            <button onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Save className="w-4 h-4" /> Save
+        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-10">
+          <div className="flex items-center gap-2 md:gap-4">
+            <button 
+              onClick={() => setIsInputPanelOpen(true)}
+              className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+              aria-label="Open input panel"
+            >
+              <Menu className="w-5 h-5" />
             </button>
-            <button onClick={handleExportPDF} className="flex items-center gap-2 px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Printer className="w-4 h-4" /> Export PDF
+            <h2 className="font-serif font-bold text-lg md:text-xl text-[var(--color-deep-ink)] truncate">The Lesson Masterpiece</h2>
+          </div>
+          <div className="flex items-center gap-2 md:gap-4">
+            <button onClick={handleSave} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+              <Save className="w-4 h-4" /> <span className="hidden sm:inline">Save</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-              <Share2 className="w-4 h-4" /> Share
+            <button onClick={handleExportPDF} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+              <Printer className="w-4 h-4" /> <span className="hidden sm:inline">Export PDF</span>
+            </button>
+            <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+              <Share2 className="w-4 h-4" /> <span className="hidden sm:inline">Share</span>
             </button>
           </div>
         </div>
