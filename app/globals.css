@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-whisper-white: #FBF9F6;
+  --color-soft-clay: #EAE3DB;
+  --color-crisp-page: #FAF7F3;
+  --color-deep-ink: #1A1A1A;
+  --color-charcoal-grey: #4A4A4A;
+  --color-concrete-light: #C7C7C7;
+  --color-sage-green: #6B9E81;
+  --color-blush-pink: #FFC0CB;
+  --color-gold-star: #FFD700;
+  --color-tomato-red: #FF6347;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-crimson), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: var(--font-fira), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+body {
+  background-color: var(--color-whisper-white);
+  color: var(--color-deep-ink);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+}
+
+/* Custom scrollbar for the notebook feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-soft-clay);
+  border-left: 1px solid var(--color-concrete-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-charcoal-grey);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-deep-ink);
+}
+
+/* Markdown styling */
+.prose {
+  color: var(--color-deep-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-family: var(--font-serif);
+  color: var(--color-deep-ink);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid var(--color-concrete-light);
+  padding-bottom: 0.25em;
+}
+.prose h1 { font-size: 2.25rem; }
+.prose h2 { font-size: 1.875rem; }
+.prose h3 { font-size: 1.5rem; }
+.prose p { margin-bottom: 1em; }
+.prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+.prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+.prose li { margin-bottom: 0.25em; }
+.prose strong { font-weight: 600; }
+.prose em { font-style: italic; }
+.prose blockquote {
+  border-left: 4px solid var(--color-sage-green);
+  padding-left: 1em;
+  margin-left: 0;
+  color: var(--color-charcoal-grey);
+  font-style: italic;
+}
