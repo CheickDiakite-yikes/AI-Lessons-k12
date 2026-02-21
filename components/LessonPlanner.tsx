@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
-import html2pdf from 'html2pdf.js';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
@@ -213,8 +212,11 @@ export function LessonPlanner() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!contentRef.current) return;
+    
+    // Dynamically import html2pdf to avoid SSR issues
+    const html2pdf = (await import('html2pdf.js')).default;
     
     const opt = {
       margin:       10,
@@ -629,7 +631,7 @@ export function LessonPlanner() {
                       <div className="text-center py-12 text-[var(--color-charcoal-grey)] opacity-70">
                         <Users className="w-12 h-12 mx-auto mb-4" />
                         <p className="font-sans">No students in this roster yet.</p>
-                        <p className="text-sm">Click "Add Student" to start building your class.</p>
+                        <p className="text-sm">Click &quot;Add Student&quot; to start building your class.</p>
                       </div>
                     ) : (
                       classes.find(c => c.id === selectedClassIdForRoster)?.students.map(student => (
