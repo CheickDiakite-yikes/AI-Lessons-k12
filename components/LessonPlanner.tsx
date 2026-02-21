@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -67,6 +67,7 @@ export function LessonPlanner() {
   const [editingClassName, setEditingClassName] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedClassIdForRoster, setSelectedClassIdForRoster] = useState<string | null>(null);
+  const [isClassListExpanded, setIsClassListExpanded] = useState(false);
   
   // Student Management State
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -331,84 +332,103 @@ export function LessonPlanner() {
             {/* My Classes */}
             <div className="lg:col-start-1 lg:row-start-1 order-1">
               <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full flex flex-col">
-                <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5" /> My Classes
-                </h2>
-                
-                {/* Add New Class */}
-                <div className="flex gap-2 mb-4">
-                  <input 
-                    type="text" 
-                    value={newClassName}
-                    onChange={(e) => setNewClassName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddClass()}
-                    placeholder="New class name..."
-                    className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-2 text-sm font-sans focus:outline-none focus:border-[var(--color-sage-green)]"
-                  />
-                  <button 
-                    onClick={handleAddClass}
-                    disabled={!newClassName.trim()}
-                    className="p-2 bg-[var(--color-sage-green)] text-white border-2 border-[var(--color-deep-ink)] hover:bg-[#5a8a6f] disabled:opacity-50 transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
+                <div 
+                  className="flex items-center justify-between mb-4 cursor-pointer group"
+                  onClick={() => setIsClassListExpanded(!isClassListExpanded)}
+                >
+                  <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2 group-hover:text-[var(--color-sage-green)] transition-colors">
+                    <BookOpen className="w-5 h-5" /> My Classes
+                  </h2>
+                  <button className="p-1 text-[var(--color-deep-ink)] group-hover:text-[var(--color-sage-green)] transition-colors">
+                    {isClassListExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </button>
                 </div>
+                
+                <AnimatePresence>
+                  {isClassListExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden flex flex-col flex-1"
+                    >
+                      {/* Add New Class */}
+                      <div className="flex gap-2 mb-4">
+                        <input 
+                          type="text" 
+                          value={newClassName}
+                          onChange={(e) => setNewClassName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddClass()}
+                          placeholder="New class name..."
+                          className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-2 text-sm font-sans focus:outline-none focus:border-[var(--color-sage-green)]"
+                        />
+                        <button 
+                          onClick={handleAddClass}
+                          disabled={!newClassName.trim()}
+                          className="p-2 bg-[var(--color-sage-green)] text-white border-2 border-[var(--color-deep-ink)] hover:bg-[#5a8a6f] disabled:opacity-50 transition-colors"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
 
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 flex-1">
-                  {classes.length === 0 ? (
-                    <p className="text-sm text-[var(--color-charcoal-grey)] italic">No classes added yet.</p>
-                  ) : (
-                    classes.map((cls) => (
-                      <div 
-                        key={cls.id} 
-                        className={`p-3 border-2 border-[var(--color-deep-ink)] flex justify-between items-center group cursor-pointer transition-colors ${selectedClassIdForRoster === cls.id ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-soft-clay)] hover:bg-[var(--color-sage-green)] hover:text-white'}`}
-                        onClick={() => handleSelectClassForRoster(cls.id)}
-                      >
-                        {editingClassId === cls.id ? (
-                          <div className="flex-1 flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
-                            <input 
-                              type="text" 
-                              value={editingClassName}
-                              onChange={(e) => setEditingClassName(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleSaveEditClass()}
-                              className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-1 text-sm font-sans text-black focus:outline-none focus:border-[var(--color-sage-green)]"
-                              autoFocus
-                            />
-                            <button 
-                              onClick={handleSaveEditClass}
-                              className="text-[var(--color-deep-ink)] hover:text-[var(--color-sage-green)] p-1"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          </div>
+                      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 flex-1">
+                        {classes.length === 0 ? (
+                          <p className="text-sm text-[var(--color-charcoal-grey)] italic">No classes added yet.</p>
                         ) : (
-                          <>
-                            <div className="flex flex-col overflow-hidden mr-2">
-                              <span className="font-bold text-sm truncate">{cls.name}</span>
-                              <span className="text-xs opacity-80">{cls.students.length} Students</span>
+                          classes.map((cls) => (
+                            <div 
+                              key={cls.id} 
+                              className={`p-3 border-2 border-[var(--color-deep-ink)] flex justify-between items-center group cursor-pointer transition-colors ${selectedClassIdForRoster === cls.id ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-soft-clay)] hover:bg-[var(--color-sage-green)] hover:text-white'}`}
+                              onClick={() => handleSelectClassForRoster(cls.id)}
+                            >
+                              {editingClassId === cls.id ? (
+                                <div className="flex-1 flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
+                                  <input 
+                                    type="text" 
+                                    value={editingClassName}
+                                    onChange={(e) => setEditingClassName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEditClass()}
+                                    className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-1 text-sm font-sans text-black focus:outline-none focus:border-[var(--color-sage-green)]"
+                                    autoFocus
+                                  />
+                                  <button 
+                                    onClick={handleSaveEditClass}
+                                    className="text-[var(--color-deep-ink)] hover:text-[var(--color-sage-green)] p-1"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="flex flex-col overflow-hidden mr-2">
+                                    <span className="font-bold text-sm truncate">{cls.name}</span>
+                                    <span className="text-xs opacity-80">{cls.students.length} Students</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleStartEditClass(cls); }}
+                                      className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-[var(--color-deep-ink)]' : 'text-[var(--color-charcoal-grey)] hover:text-white'}`}
+                                      aria-label="Edit class"
+                                    >
+                                      <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.id); }}
+                                      className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-red-300' : 'text-[var(--color-charcoal-grey)] hover:text-red-300'}`}
+                                      aria-label="Delete class"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </>
+                              )}
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleStartEditClass(cls); }}
-                                className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-[var(--color-deep-ink)]' : 'text-[var(--color-charcoal-grey)] hover:text-white'}`}
-                                aria-label="Edit class"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.id); }}
-                                className={`p-1 ${selectedClassIdForRoster === cls.id ? 'text-white hover:text-red-300' : 'text-[var(--color-charcoal-grey)] hover:text-red-300'}`}
-                                aria-label="Delete class"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </>
+                          ))
                         )}
                       </div>
-                    ))
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
               </div>
             </div>
 
