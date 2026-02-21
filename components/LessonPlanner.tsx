@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera } from 'lucide-react';
+import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -28,6 +28,15 @@ export function LessonPlanner() {
   const [currentView, setCurrentView] = useState<'planner' | 'profile'>('planner');
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Class Management State
+  const [classes, setClasses] = useState<string[]>([
+    '5th Grade Science (Period 1)',
+    '5th Grade Math (Period 2)',
+    '6th Grade Science (Period 4)'
+  ]);
+  const [newClassName, setNewClassName] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
@@ -142,6 +151,20 @@ export function LessonPlanner() {
     }
   };
 
+  const handleAddClass = () => {
+    if (newClassName.trim() && !classes.includes(newClassName.trim())) {
+      setClasses([...classes, newClassName.trim()]);
+      setNewClassName('');
+    }
+  };
+
+  const handleDeleteClass = (classToDelete: string) => {
+    setClasses(classes.filter(c => c !== classToDelete));
+    if (selectedClass === classToDelete) {
+      setSelectedClass('');
+    }
+  };
+
   if (currentView === 'profile') {
     return (
       <div className="min-h-screen bg-[var(--color-whisper-white)] p-4 md:p-8">
@@ -190,12 +213,43 @@ export function LessonPlanner() {
                 <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5" /> My Classes
                 </h2>
-                <div className="space-y-3">
-                  {['5th Grade Science (Period 1)', '5th Grade Math (Period 2)', '6th Grade Science (Period 4)'].map((cls, i) => (
-                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] hover:bg-[var(--color-sage-green)] hover:text-white transition-colors cursor-pointer font-bold text-sm">
-                      {cls}
-                    </div>
-                  ))}
+                
+                {/* Add New Class */}
+                <div className="flex gap-2 mb-4">
+                  <input 
+                    type="text" 
+                    value={newClassName}
+                    onChange={(e) => setNewClassName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddClass()}
+                    placeholder="New class name..."
+                    className="flex-1 bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] p-2 text-sm font-sans focus:outline-none focus:border-[var(--color-sage-green)]"
+                  />
+                  <button 
+                    onClick={handleAddClass}
+                    disabled={!newClassName.trim()}
+                    className="p-2 bg-[var(--color-sage-green)] text-white border-2 border-[var(--color-deep-ink)] hover:bg-[#5a8a6f] disabled:opacity-50 transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                  {classes.length === 0 ? (
+                    <p className="text-sm text-[var(--color-charcoal-grey)] italic">No classes added yet.</p>
+                  ) : (
+                    classes.map((cls, i) => (
+                      <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] flex justify-between items-center group">
+                        <span className="font-bold text-sm truncate mr-2">{cls}</span>
+                        <button 
+                          onClick={() => handleDeleteClass(cls)}
+                          className="text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Delete class"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -279,6 +333,24 @@ export function LessonPlanner() {
         </div>
         
         <div className="p-6 space-y-8 flex-1">
+          {/* Target Class/Roster (Optional) */}
+          {classes.length > 0 && (
+            <div className="space-y-2">
+              <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Target Class (Optional)</label>
+              <div className="relative">
+                <select 
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+                >
+                  <option value="">-- Select a Class --</option>
+                  {classes.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
+              </div>
+            </div>
+          )}
+
           {/* Plan Type */}
           <div className="space-y-2">
             <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Plan Type</label>
