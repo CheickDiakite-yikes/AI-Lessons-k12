@@ -9,6 +9,7 @@ export async function generateLessonPlan(params: {
   academicLevels: string[];
   autoGenerate: boolean;
   manualObjectives: string;
+  studentsContext?: string;
 }) {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!apiKey) {
@@ -27,6 +28,7 @@ export async function generateLessonPlan(params: {
     - Lesson Duration: ${params.duration} minutes
     - English Proficiency Levels to accommodate: ${params.englishProficiency.join(', ')}
     - Academic Levels to accommodate: ${params.academicLevels.join(', ')}
+    ${params.studentsContext ? `- Detailed Class Roster Context (Use this to highly customize the differentiation and activities):\n${params.studentsContext}` : ''}
     - Auto-Generate Objectives: ${params.autoGenerate ? 'Yes' : 'No'}
     ${!params.autoGenerate && params.manualObjectives ? `- Manual Objectives/Topics provided by teacher: ${params.manualObjectives}` : ''}
 

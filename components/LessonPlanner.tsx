@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus } from 'lucide-react';
 import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import html2pdf from 'html2pdf.js';
@@ -13,6 +13,25 @@ const GRADE_LEVELS = ['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4t
 const SUBJECTS = ['Math', 'Science', 'English/Language Arts', 'Social Studies', 'ESL', 'Art', 'Music', 'Physical Education', 'Special Education'];
 const ENGLISH_PROFICIENCY = ['Entering', 'Emerging', 'Developing', 'Expanding', 'Bridging'];
 const ACADEMIC_LEVELS = ['Below Grade', 'At Grade', 'Above Grade'];
+const ACADEMIC_LEVELS_EXTENDED = ['Significantly Below Grade', 'Below Grade', 'At Grade', 'Above Grade', 'Significantly Above Grade'];
+const LEARNING_PREFERENCES = ['Visual', 'Auditory', 'Kinesthetic', 'Reading/Writing', 'Needs 1v1', 'Direction-oriented'];
+
+type Student = {
+  id: string;
+  name: string;
+  englishProficiency: string;
+  readingLevel: string;
+  mathLevel: string;
+  writingLevel: string;
+  academicLevel: string;
+  learningPreference: string;
+};
+
+type ClassRoster = {
+  id: string;
+  name: string;
+  students: Student[];
+};
 
 export function LessonPlanner() {
   const [planType, setPlanType] = useState(PLAN_TYPES[0]);
@@ -30,13 +49,25 @@ export function LessonPlanner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Class Management State
-  const [classes, setClasses] = useState<string[]>([
-    '5th Grade Science (Period 1)',
-    '5th Grade Math (Period 2)',
-    '6th Grade Science (Period 4)'
+  const [classes, setClasses] = useState<ClassRoster[]>([
+    { id: '1', name: '5th Grade Science (Period 1)', students: [] },
+    { id: '2', name: '5th Grade Math (Period 2)', students: [] },
+    { id: '3', name: '6th Grade Science (Period 4)', students: [] }
   ]);
   const [newClassName, setNewClassName] = useState('');
-  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('');
+  const [selectedClassIdForRoster, setSelectedClassIdForRoster] = useState<string | null>(null);
+  
+  // Student Management State
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [newStudent, setNewStudent] = useState<Partial<Student>>({
+    englishProficiency: ENGLISH_PROFICIENCY[3],
+    readingLevel: 'At Grade',
+    mathLevel: 'At Grade',
+    writingLevel: 'At Grade',
+    academicLevel: 'At Grade',
+    learningPreference: 'Visual'
+  });
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
@@ -54,6 +85,16 @@ export function LessonPlanner() {
     setImagePrompt(null);
     
     try {
+      let studentsContext = undefined;
+      if (selectedClassId) {
+        const selectedClass = classes.find(c => c.id === selectedClassId);
+        if (selectedClass && selectedClass.students.length > 0) {
+          studentsContext = selectedClass.students.map(s => 
+            `- ${s.name}: English: ${s.englishProficiency}, Reading: ${s.readingLevel}, Math: ${s.mathLevel}, Writing: ${s.writingLevel}, Academic: ${s.academicLevel}, Preference: ${s.learningPreference}`
+          ).join('\n');
+        }
+      }
+
       const plan = await generateLessonPlan({
         planType,
         gradeLevel,
@@ -62,7 +103,8 @@ export function LessonPlanner() {
         englishProficiency,
         academicLevels,
         autoGenerate,
-        manualObjectives
+        manualObjectives,
+        studentsContext
       });
       
       setGeneratedPlan(plan.text);
@@ -152,17 +194,61 @@ export function LessonPlanner() {
   };
 
   const handleAddClass = () => {
-    if (newClassName.trim() && !classes.includes(newClassName.trim())) {
-      setClasses([...classes, newClassName.trim()]);
+    if (newClassName.trim() && !classes.find(c => c.name === newClassName.trim())) {
+      setClasses([...classes, { id: Date.now().toString(), name: newClassName.trim(), students: [] }]);
       setNewClassName('');
     }
   };
 
-  const handleDeleteClass = (classToDelete: string) => {
-    setClasses(classes.filter(c => c !== classToDelete));
-    if (selectedClass === classToDelete) {
-      setSelectedClass('');
+  const handleDeleteClass = (classIdToDelete: string) => {
+    setClasses(classes.filter(c => c.id !== classIdToDelete));
+    if (selectedClassId === classIdToDelete) {
+      setSelectedClassId('');
     }
+    if (selectedClassIdForRoster === classIdToDelete) {
+      setSelectedClassIdForRoster(null);
+    }
+  };
+
+  const handleAddStudent = () => {
+    if (!newStudent.name?.trim() || !selectedClassIdForRoster) return;
+    
+    const student: Student = {
+      id: Date.now().toString(),
+      name: newStudent.name.trim(),
+      englishProficiency: newStudent.englishProficiency || ENGLISH_PROFICIENCY[3],
+      readingLevel: newStudent.readingLevel || 'At Grade',
+      mathLevel: newStudent.mathLevel || 'At Grade',
+      writingLevel: newStudent.writingLevel || 'At Grade',
+      academicLevel: newStudent.academicLevel || 'At Grade',
+      learningPreference: newStudent.learningPreference || 'Visual'
+    };
+
+    setClasses(classes.map(c => {
+      if (c.id === selectedClassIdForRoster) {
+        return { ...c, students: [...c.students, student] };
+      }
+      return c;
+    }));
+    
+    setNewStudent({
+      englishProficiency: ENGLISH_PROFICIENCY[3],
+      readingLevel: 'At Grade',
+      mathLevel: 'At Grade',
+      writingLevel: 'At Grade',
+      academicLevel: 'At Grade',
+      learningPreference: 'Visual'
+    });
+    setIsAddingStudent(false);
+  };
+
+  const handleDeleteStudent = (classId: string, studentId: string) => {
+    setClasses(classes.map(c => {
+      if (c.id === classId) {
+        return { ...c, students: c.students.filter(s => s.id !== studentId) };
+      }
+      return c;
+    }));
   };
 
   if (currentView === 'profile') {
@@ -237,12 +323,15 @@ export function LessonPlanner() {
                   {classes.length === 0 ? (
                     <p className="text-sm text-[var(--color-charcoal-grey)] italic">No classes added yet.</p>
                   ) : (
-                    classes.map((cls, i) => (
-                      <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] flex justify-between items-center group">
-                        <span className="font-bold text-sm truncate mr-2">{cls}</span>
+                    classes.map((cls) => (
+                      <div key={cls.id} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] flex justify-between items-center group cursor-pointer hover:bg-[var(--color-sage-green)] hover:text-white transition-colors" onClick={() => setSelectedClassIdForRoster(cls.id)}>
+                        <div className="flex flex-col overflow-hidden mr-2">
+                          <span className="font-bold text-sm truncate">{cls.name}</span>
+                          <span className="text-xs opacity-80">{cls.students.length} Students</span>
+                        </div>
                         <button 
-                          onClick={() => handleDeleteClass(cls)}
-                          className="text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteClass(cls.id); }}
+                          className="text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                           aria-label="Delete class"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -272,41 +361,188 @@ export function LessonPlanner() {
               </div>
             </div>
 
-            {/* Right Column: Calendar View */}
+            {/* Right Column: Calendar View or Roster View */}
             <div className="lg:col-span-2">
-              <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
-                    <Calendar className="w-6 h-6" /> Lesson Calendar
-                  </h2>
-                  <div className="flex gap-2">
-                    <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white font-bold text-sm">Month</button>
-                    <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">Week</button>
+              {selectedClassIdForRoster ? (
+                <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full flex flex-col">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
+                        <Users className="w-6 h-6" /> {classes.find(c => c.id === selectedClassIdForRoster)?.name} Roster
+                      </h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setSelectedClassIdForRoster(null)} className="px-3 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">
+                        Close Roster
+                      </button>
+                      <button onClick={() => setIsAddingStudent(!isAddingStudent)} className="flex items-center gap-2 px-3 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white font-bold text-sm hover:bg-[#5a8a6f]">
+                        <UserPlus className="w-4 h-4" /> Add Student
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Add Student Form */}
+                  <AnimatePresence>
+                    {isAddingStudent && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mb-6 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] p-4 overflow-hidden"
+                      >
+                        <h3 className="font-bold text-[var(--color-deep-ink)] mb-4">New Student Details</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Name</label>
+                            <input 
+                              type="text" 
+                              value={newStudent.name || ''}
+                              onChange={(e) => setNewStudent({...newStudent, name: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                              placeholder="Student Name"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">English Proficiency</label>
+                            <select 
+                              value={newStudent.englishProficiency}
+                              onChange={(e) => setNewStudent({...newStudent, englishProficiency: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {ENGLISH_PROFICIENCY.map(ep => <option key={ep} value={ep}>{ep}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Reading Level</label>
+                            <select 
+                              value={newStudent.readingLevel}
+                              onChange={(e) => setNewStudent({...newStudent, readingLevel: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {ACADEMIC_LEVELS_EXTENDED.map(al => <option key={al} value={al}>{al}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Math Level</label>
+                            <select 
+                              value={newStudent.mathLevel}
+                              onChange={(e) => setNewStudent({...newStudent, mathLevel: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {ACADEMIC_LEVELS_EXTENDED.map(al => <option key={al} value={al}>{al}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Writing Level</label>
+                            <select 
+                              value={newStudent.writingLevel}
+                              onChange={(e) => setNewStudent({...newStudent, writingLevel: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {ACADEMIC_LEVELS_EXTENDED.map(al => <option key={al} value={al}>{al}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Overall Academic</label>
+                            <select 
+                              value={newStudent.academicLevel}
+                              onChange={(e) => setNewStudent({...newStudent, academicLevel: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {ACADEMIC_LEVELS_EXTENDED.map(al => <option key={al} value={al}>{al}</option>)}
+                            </select>
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Learning Preference</label>
+                            <select 
+                              value={newStudent.learningPreference}
+                              onChange={(e) => setNewStudent({...newStudent, learningPreference: e.target.value})}
+                              className="w-full border-2 border-[var(--color-deep-ink)] p-2 text-sm focus:outline-none focus:border-[var(--color-sage-green)]"
+                            >
+                              {LEARNING_PREFERENCES.map(lp => <option key={lp} value={lp}>{lp}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <button 
+                            onClick={handleAddStudent}
+                            disabled={!newStudent.name?.trim()}
+                            className="px-4 py-2 bg-[var(--color-deep-ink)] text-white font-bold text-sm hover:bg-black disabled:opacity-50 transition-colors"
+                          >
+                            Save Student
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Student List */}
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                    {classes.find(c => c.id === selectedClassIdForRoster)?.students.length === 0 ? (
+                      <div className="text-center py-12 text-[var(--color-charcoal-grey)] opacity-70">
+                        <Users className="w-12 h-12 mx-auto mb-4" />
+                        <p className="font-sans">No students in this roster yet.</p>
+                        <p className="text-sm">Click "Add Student" to start building your class.</p>
+                      </div>
+                    ) : (
+                      classes.find(c => c.id === selectedClassIdForRoster)?.students.map(student => (
+                        <div key={student.id} className="p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] relative group">
+                          <button 
+                            onClick={() => handleDeleteStudent(selectedClassIdForRoster, student.id)}
+                            className="absolute top-4 right-4 text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Delete student"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <h4 className="font-bold text-lg text-[var(--color-deep-ink)] mb-2">{student.name}</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs font-mono text-[var(--color-charcoal-grey)]">
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">English:</span> {student.englishProficiency}</div>
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">Reading:</span> {student.readingLevel}</div>
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">Math:</span> {student.mathLevel}</div>
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">Writing:</span> {student.writingLevel}</div>
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">Academic:</span> {student.academicLevel}</div>
+                            <div><span className="font-bold text-[var(--color-deep-ink)]">Pref:</span> {student.learningPreference}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
+              ) : (
+                <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
+                      <Calendar className="w-6 h-6" /> Lesson Calendar
+                    </h2>
+                    <div className="flex gap-2">
+                      <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white font-bold text-sm">Month</button>
+                      <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">Week</button>
+                    </div>
+                  </div>
 
-                {/* Mock Calendar Grid */}
-                <div className="grid grid-cols-5 gap-2 md:gap-4">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                    <div key={day} className="text-center font-bold text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-2">{day}</div>
-                  ))}
-                  
-                  {/* Calendar Days */}
-                  {[...Array(20)].map((_, i) => {
-                    const hasLesson = i === 2 || i === 7 || i === 14;
-                    return (
-                      <div key={i} className={`aspect-square border-2 border-[var(--color-concrete-light)] p-1 md:p-2 relative ${hasLesson ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)]' : 'bg-[var(--color-whisper-white)]'}`}>
-                        <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">{i + 1}</span>
-                        {hasLesson && (
-                          <div className="absolute bottom-1 md:bottom-2 left-1 md:left-2 right-1 md:right-2 bg-[var(--color-sage-green)] text-white text-[10px] md:text-xs font-bold p-1 truncate border border-[var(--color-deep-ink)]">
-                            Science Unit
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {/* Mock Calendar Grid */}
+                  <div className="grid grid-cols-5 gap-2 md:gap-4">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                      <div key={day} className="text-center font-bold text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-2">{day}</div>
+                    ))}
+                    
+                    {/* Calendar Days */}
+                    {[...Array(20)].map((_, i) => {
+                      const hasLesson = i === 2 || i === 7 || i === 14;
+                      return (
+                        <div key={i} className={`aspect-square border-2 border-[var(--color-concrete-light)] p-1 md:p-2 relative ${hasLesson ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)]' : 'bg-[var(--color-whisper-white)]'}`}>
+                          <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">{i + 1}</span>
+                          {hasLesson && (
+                            <div className="absolute bottom-1 md:bottom-2 left-1 md:left-2 right-1 md:right-2 bg-[var(--color-sage-green)] text-white text-[10px] md:text-xs font-bold p-1 truncate border border-[var(--color-deep-ink)]">
+                              Science Unit
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -339,12 +575,12 @@ export function LessonPlanner() {
               <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Target Class (Optional)</label>
               <div className="relative">
                 <select 
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
                   className="w-full appearance-none bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 pr-10 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
                 >
                   <option value="">-- Select a Class --</option>
-                  {classes.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+                  {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.name}</option>)}
                 </select>
                 <ChevronDown className="absolute right-3 top-4 md:top-3.5 pointer-events-none text-[var(--color-deep-ink)]" />
               </div>
