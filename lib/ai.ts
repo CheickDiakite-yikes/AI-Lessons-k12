@@ -13,7 +13,7 @@ type LessonPlanParams = {
 };
 
 const RETRY_DELAYS = [1000, 3000, 6000];
-const REQUEST_TIMEOUT_MS = 90_000;
+const REQUEST_TIMEOUT_MS = 115_000;
 
 async function fetchWithRetry(url: string, options: RequestInit): Promise<Response> {
   const maxAttempts = RETRY_DELAYS.length;
