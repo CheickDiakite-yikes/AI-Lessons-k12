@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, isValidElement, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 import Markdown, { type Components } from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
@@ -228,6 +228,17 @@ export function LessonPlanner() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [savedPlans, setSavedPlans] = useState<any[]>([]);
+  const [generationPhase, setGenerationPhase] = useState(0);
+  const [slideImages, setSlideImages] = useState<(string | null)[]>([]);
+  const [slidesGenerating, setSlidesGenerating] = useState(false);
+  const [slidesProgress, setSlidesProgress] = useState({ current: 0, total: 0 });
+  const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    };
+  }, []);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
@@ -285,13 +296,42 @@ export function LessonPlanner() {
     loadSavedPlans();
   }, []);
 
+  const getGenerationSteps = () => {
+    const steps = [
+      { label: 'Analyzing standards & curriculum', icon: '📚' },
+      { label: 'Designing lesson structure', icon: '✏️' },
+      { label: 'Building differentiation strategies', icon: '🎯' },
+      { label: 'Writing lesson content', icon: '📝' },
+    ];
+    if (includeWorksheets) steps.push({ label: 'Creating worksheets', icon: '📋' });
+    if (includeSlides) steps.push({ label: 'Preparing slide outlines', icon: '🎨' });
+    steps.push({ label: 'Generating hero illustration', icon: '🖼️' });
+    if (includeSlides) steps.push({ label: 'Designing presentation slides', icon: '✨' });
+    steps.push({ label: 'Saving your masterpiece', icon: '💾' });
+    return steps;
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setIsInputPanelOpen(false);
     setGeneratedPlan(null);
     setGeneratedImage(null);
     setImagePrompt(null);
+    setSlideImages([]);
+    setSlidesGenerating(false);
+    setGenerationPhase(0);
     
+    const steps = getGenerationSteps();
+    let phaseIndex = 0;
+    const advancePhase = () => { phaseIndex++; setGenerationPhase(phaseIndex); };
+    if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
+    phaseTimerRef.current = setInterval(() => {
+      const maxBeforePlan = includeWorksheets && includeSlides ? 5 : includeWorksheets || includeSlides ? 4 : 3;
+      if (phaseIndex < maxBeforePlan) {
+        advancePhase();
+      }
+    }, 3500);
+
     try {
       let studentsContext = undefined;
       if (selectedClassId) {
@@ -317,6 +357,10 @@ export function LessonPlanner() {
         studentsContext
       });
       
+      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
+      const heroPhaseIdx = steps.findIndex(s => s.label.includes('hero'));
+      if (heroPhaseIdx >= 0) { phaseIndex = heroPhaseIdx; setGenerationPhase(heroPhaseIdx); }
+      
       setGeneratedPlan(plan.text);
       
       let image: string | null = null;
@@ -327,6 +371,48 @@ export function LessonPlanner() {
         setGeneratedImage(image);
         setIsGeneratingImage(false);
       }
+
+      if (includeSlides && plan.slides && plan.slides.length > 0) {
+        const slidePhaseIdx = steps.findIndex(s => s.label.includes('Designing presentation'));
+        if (slidePhaseIdx >= 0) { phaseIndex = slidePhaseIdx; setGenerationPhase(slidePhaseIdx); }
+        setSlidesGenerating(true);
+        setSlidesProgress({ current: 0, total: plan.slides.length });
+        const slideImgs: (string | null)[] = new Array(plan.slides.length).fill(null);
+        setSlideImages([...slideImgs]);
+
+        for (let i = 0; i < plan.slides.length; i++) {
+          setSlidesProgress({ current: i + 1, total: plan.slides.length });
+          try {
+            const slide = plan.slides[i];
+            const slidePrompt = `Create a professional educational presentation slide for a ${gradeLevel} ${subject} classroom. This is slide ${i + 1} of ${plan.slides.length}.
+
+Title: "${slide.title}"
+Content bullets:
+${slide.bullets.map((b: string) => `- ${b}`).join('\n')}
+
+Design requirements:
+- 16:9 aspect ratio presentation slide
+- Clean, modern educational design with vibrant but professional colors
+- Large readable title at the top
+- Bullet points clearly displayed with good typography
+- Include relevant educational illustrations or icons
+- Age-appropriate for ${gradeLevel} students
+- Background should be clean and not distract from content
+- Use a cohesive color scheme suitable for classroom presentation
+- Text must be clearly readable at projection size`;
+            
+            const slideImg = await generateImage(slidePrompt);
+            slideImgs[i] = slideImg;
+            setSlideImages([...slideImgs]);
+          } catch (slideErr) {
+            console.error(`Failed to generate slide ${i + 1}:`, slideErr);
+          }
+        }
+        setSlidesGenerating(false);
+      }
+
+      const savePhaseIdx = steps.findIndex(s => s.label.includes('Saving'));
+      if (savePhaseIdx >= 0) { phaseIndex = savePhaseIdx; setGenerationPhase(savePhaseIdx); }
 
       try {
         const saved: any = await api.lessonPlans.create({
@@ -345,8 +431,11 @@ export function LessonPlanner() {
       } catch (saveError) {
         console.error('Failed to save lesson plan:', saveError);
       }
+
+      advancePhase();
       
     } catch (error) {
+      if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
       console.error("Failed to generate:", error);
       const message = error instanceof Error ? error.message : 'Failed to generate lesson plan. Please try again.';
       alert(message);
@@ -1293,18 +1382,54 @@ export function LessonPlanner() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center"
+                    className="flex flex-col items-center justify-center h-full py-12 md:py-20"
                   >
-                    <div className="relative w-24 h-24 md:w-32 md:h-32 mb-8">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 mb-6">
                       <motion.div 
                         animate={{ rotate: 360 }}
                         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                         className="absolute inset-0 border-4 border-dashed border-[var(--color-sage-green)] rounded-full"
                       />
-                      <Sparkles className="absolute inset-0 m-auto w-10 h-10 md:w-12 md:h-12 text-[var(--color-gold-star)]" />
+                      <Sparkles className="absolute inset-0 m-auto w-8 h-8 md:w-10 md:h-10 text-[var(--color-gold-star)]" />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-4">Gemini Pro is crafting your {subject} plan...</h3>
-                    <p className="text-[var(--color-charcoal-grey)] font-mono text-sm md:text-base max-w-md">Aligning objectives, Massachusetts standards, differentiation, and selected add-ons.</p>
+                    <h3 className="text-lg md:text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-2">Crafting your {subject} plan</h3>
+                    <p className="text-[var(--color-charcoal-grey)] text-sm mb-8 max-w-sm text-center">{gradeLevel} &middot; {planLength} &middot; {duration} min</p>
+                    
+                    <div className="w-full max-w-sm space-y-1">
+                      {getGenerationSteps().map((step, i) => {
+                        const isComplete = i < generationPhase;
+                        const isActive = i === generationPhase;
+                        return (
+                          <motion.div
+                            key={step.label}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.08 }}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 ${
+                              isActive ? 'bg-[var(--color-soft-clay)] border border-[var(--color-sage-green)]' : 
+                              isComplete ? 'opacity-60' : 'opacity-30'
+                            }`}
+                          >
+                            <span className="text-base flex-shrink-0">{step.icon}</span>
+                            {isComplete ? (
+                              <CheckCircle2 className="w-4 h-4 text-[var(--color-sage-green)] flex-shrink-0" />
+                            ) : isActive ? (
+                              <Loader2 className="w-4 h-4 text-[var(--color-sage-green)] animate-spin flex-shrink-0" />
+                            ) : (
+                              <Circle className="w-4 h-4 text-[var(--color-concrete-light)] flex-shrink-0" />
+                            )}
+                            <span className={`text-sm font-medium ${isActive ? 'text-[var(--color-deep-ink)]' : 'text-[var(--color-charcoal-grey)]'}`}>
+                              {step.label}
+                            </span>
+                            {isActive && slidesGenerating && step.label.includes('Designing presentation') && (
+                              <span className="text-xs font-mono text-[var(--color-sage-green)] ml-auto">
+                                {slidesProgress.current}/{slidesProgress.total}
+                              </span>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
                   </motion.div>
                 ) : generatedPlan ? (
                   <motion.div 
@@ -1332,6 +1457,34 @@ export function LessonPlanner() {
                     <div className="lesson-markdown">
                       <Markdown components={markdownComponents}>{renderedPlan}</Markdown>
                     </div>
+
+                    {(slideImages.length > 0 || slidesGenerating) && (
+                      <div className="mt-10 pt-8 border-t-3 border-[var(--color-deep-ink)]">
+                        <h2 className="lesson-h2 lesson-h2-addons flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" /> Presentation Slides
+                        </h2>
+                        <div className="space-y-6 mt-6">
+                          {slideImages.map((img, i) => (
+                            <div key={i} className="border-2 border-[var(--color-deep-ink)] bg-white shadow-[4px_4px_0px_0px_var(--color-deep-ink)] overflow-hidden">
+                              <div className="px-4 py-2 bg-[var(--color-soft-clay)] border-b-2 border-[var(--color-deep-ink)] flex items-center justify-between">
+                                <span className="font-bold text-sm text-[var(--color-deep-ink)]">Slide {i + 1}</span>
+                                {img && (
+                                  <a href={img} download={`slide_${i + 1}.png`} className="text-xs font-mono text-[var(--color-sage-green)] hover:underline">Download</a>
+                                )}
+                              </div>
+                              {img ? (
+                                <img src={img} alt={`Slide ${i + 1}`} className="w-full h-auto" />
+                              ) : (
+                                <div className="w-full aspect-video bg-[var(--color-soft-clay)] animate-pulse flex flex-col items-center justify-center gap-2">
+                                  <Loader2 className="w-8 h-8 text-[var(--color-sage-green)] animate-spin" />
+                                  <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">Generating slide {i + 1}...</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center opacity-50">

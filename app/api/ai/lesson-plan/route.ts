@@ -38,7 +38,11 @@ export async function POST(request: NextRequest) {
       studentsContext: typeof studentsContext === 'string' ? studentsContext : undefined,
     });
 
-    return Response.json(plan);
+    return Response.json({
+      text: plan.text,
+      imagePrompt: plan.imagePrompt,
+      slides: plan.slides || [],
+    });
   } catch (error) {
     console.error('Lesson plan generation error:', error);
     const message = error instanceof Error ? error.message : 'Failed to generate lesson plan.';

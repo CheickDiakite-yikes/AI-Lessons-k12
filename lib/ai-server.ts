@@ -15,6 +15,11 @@ type LessonPlanParams = {
   studentsContext?: string;
 };
 
+type SlideData = {
+  title: string;
+  bullets: string[];
+};
+
 function getGeminiApiKey(): string {
   const key = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!key) {
@@ -52,7 +57,13 @@ ${params.studentsContext ? `- Class Roster Context (use names for personalizatio
 Formatting rules (strict):
 - Use ATX headings only (#, ##, ###, ####).
 - Do NOT use markdown tables, pipe characters, HTML tags, code fences, or horizontal rules.
-- Use standard bullets and numbered lists only.
+- Use bullet lists (-) and numbered lists extensively. Never write dense paragraphs.
+- Use **bold** for key terms, labels, and vocabulary words.
+- Use *italics* for teacher actions, student responses, and instructional cues.
+- Use sub-bullets (indented -) for details under main bullets.
+- Every section should use structured lists, not prose paragraphs.
+- Label items clearly: start bullets with a **Bold Label:** followed by content.
+- For timing in procedures, format as: **[X min]** at the start of each step.
 - Keep worksheet questions on separate lines.
 - For fill-in-the-blank, use at least 12 underscores: ____________.
 - For multiple choice, options must be on separate lines prefixed with A), B), C), D).
@@ -131,8 +142,17 @@ ${includeWorksheets ? `  - Worksheets:
       - Fill in the Blank: list each number with expected answer.
       - Multiple Choice: list number + correct letter + a short rationale (max 1 sentence).
 ` : ''}${includeSlides ? `  - Presentation Slides:
-    - Provide a 5-10 slide outline.
-    - For each slide include: slide title, 3-5 bullet points, and a 16:9 visual prompt relevant to the topic and age group.
+    - Provide a 6-8 slide outline.
+    - For each slide, use this exact format:
+      <SLIDE>
+      Title: [Slide title here]
+      Bullet: [First bullet point]
+      Bullet: [Second bullet point]
+      Bullet: [Third bullet point]
+      </SLIDE>
+    - Each slide must have a title and 3-5 bullet points.
+    - Make slides engaging, age-appropriate for ${params.gradeLevel}, and visually descriptive.
+    - Do NOT include visual prompts in the slides - just the title and bullet points.
 ` : ''}` : ''}
 
 3) Tone:
@@ -160,13 +180,36 @@ ${includeWorksheets ? `  - Worksheets:
     imagePrompt = match[1].trim();
   }
 
-  const cleanText = normalizeLessonMarkdown(
-    text.replace(/<IMAGE_PROMPT>[\s\S]*?<\/IMAGE_PROMPT>/, '').trim(),
-  );
+  const slides: SlideData[] = [];
+  const slideRegex = /<SLIDE>([\s\S]*?)<\/SLIDE>/g;
+  let slideMatch;
+  while ((slideMatch = slideRegex.exec(text)) !== null) {
+    const slideContent = slideMatch[1].trim();
+    const titleMatch = slideContent.match(/Title:\s*(.+)/);
+    const bulletMatches = slideContent.match(/Bullet:\s*(.+)/g);
+    if (titleMatch) {
+      slides.push({
+        title: titleMatch[1].trim(),
+        bullets: (bulletMatches || []).map(b => b.replace(/^Bullet:\s*/, '').trim()),
+      });
+    }
+  }
+
+  let cleanText = text
+    .replace(/<IMAGE_PROMPT>[\s\S]*?<\/IMAGE_PROMPT>/g, '')
+    .replace(/<SLIDE>[\s\S]*?<\/SLIDE>/g, '')
+    .trim();
+
+  if (slides.length > 0) {
+    cleanText = cleanText.replace(/###?\s*Presentation Slides[^\n]*\n?/, '').trim();
+  }
+
+  cleanText = normalizeLessonMarkdown(cleanText);
 
   return {
     text: cleanText,
     imagePrompt,
+    slides,
   };
 }
 

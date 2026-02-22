@@ -96,10 +96,13 @@ drizzle.config.ts             - Drizzle Kit configuration
 - Signup API: `POST /api/auth/signup` creates user with hashed password
 
 ## Recent Changes
+- **Step-by-step progress tracker**: Generation UI shows animated progress steps (analyzing standards, designing structure, building differentiation, etc.) with checkmarks and spinners
+- **Improved text formatting**: AI prompt enforces structured lists, bold labels, italics for teacher/student actions, sub-bullets, and timing markers. CSS updated for nested list support and sage-green markers
+- **Presentation slides as images**: When "Include Slides" is enabled, AI generates structured slide data (title + bullets), then each slide is rendered as a beautiful image using Gemini 3 Pro Image Preview model. Slides display as a gallery with download buttons
+- **Responsive layout**: Two-panel layout breakpoint moved from md to lg for better iPad/tablet support. Left panel is now an overlay on sub-1024px screens
+- **Saved plans from database**: Real data fetched and displayed with click-to-load, delete, and metadata
 - **Added email/password signup and login** alongside Google OAuth
 - **Database schema updated**: Added `password_hash` column, made `google_id` nullable, made `email` unique index
-- **Removed Firebase entirely** - No more Firebase Auth, Firestore, or Firebase Admin SDK
-- **Migrated to Google OAuth via NextAuth.js** - Direct Google sign-in without Firebase
 - **Cookie-based API auth**: API routes use NextAuth session cookies instead of Bearer tokens
 - All data persistence handled by PostgreSQL via Drizzle ORM
 - Integrated Replit Object Storage for lesson images and profile pictures

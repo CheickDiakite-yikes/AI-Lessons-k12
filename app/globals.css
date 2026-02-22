@@ -158,18 +158,43 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .lesson-p {
-  margin: 0.65rem 0;
+  margin: 0.55rem 0;
 }
 
-.lesson-ul,
+.lesson-markdown em {
+  font-style: italic;
+  color: var(--color-charcoal-grey);
+}
+
+.lesson-ul {
+  margin: 0.65rem 0 0.9rem;
+  padding-left: 1.4rem;
+  list-style-type: disc;
+}
+
 .lesson-ol {
-  margin: 0.75rem 0 1rem;
-  padding-left: 1.35rem;
+  margin: 0.65rem 0 0.9rem;
+  padding-left: 1.4rem;
+  list-style-type: decimal;
+}
+
+.lesson-ul .lesson-ul {
+  margin: 0.3rem 0 0.3rem;
+  list-style-type: circle;
+}
+
+.lesson-ul .lesson-ul .lesson-ul {
+  list-style-type: square;
 }
 
 .lesson-li {
-  margin: 0.4rem 0;
-  padding-left: 0.1rem;
+  margin: 0.35rem 0;
+  padding-left: 0.15rem;
+  line-height: 1.6;
+}
+
+.lesson-li::marker {
+  color: var(--color-sage-green);
 }
 
 .lesson-strong {
@@ -183,6 +208,7 @@ h1, h2, h3, h4, h5, h6 {
   border-left: 4px solid var(--color-sage-green);
   background: #f3f8f5;
   color: var(--color-charcoal-grey);
+  font-style: italic;
 }
 
 .lesson-inline-image {

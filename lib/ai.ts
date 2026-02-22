@@ -29,8 +29,13 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return response.json();
 }
 
+export type SlideData = {
+  title: string;
+  bullets: string[];
+};
+
 export async function generateLessonPlan(params: LessonPlanParams) {
-  return postJson<{ text: string; imagePrompt: string | null }>('/api/ai/lesson-plan', params);
+  return postJson<{ text: string; imagePrompt: string | null; slides: SlideData[] }>('/api/ai/lesson-plan', params);
 }
 
 export async function generateImage(prompt: string): Promise<string> {
