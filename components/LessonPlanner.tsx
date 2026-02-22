@@ -1434,8 +1434,8 @@ Design requirements:
         />
       )}
       <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} lg:flex fixed lg:relative inset-y-0 left-0 w-[85%] sm:w-[70%] md:w-[50%] lg:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-screen lg:sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-40 lg:z-20 app-input-panel no-print`}>
-        <div className="p-4 sm:p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between">
-          <h1 className="text-xl sm:text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
+        <div className="p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between">
+          <h1 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
             <PenLine className="w-6 h-6" />
             The Input Journal
           </h1>
@@ -1448,7 +1448,7 @@ Design requirements:
           </button>
         </div>
         
-        <div className="p-4 sm:p-6 space-y-8 flex-1">
+        <div className="p-6 space-y-8 flex-1">
           {/* Target Class/Roster (Optional) */}
           {classes.length > 0 && (
             <div className="space-y-2">
@@ -1627,7 +1627,7 @@ Design requirements:
         </div>
 
         {/* Generate Button */}
-        <div className="p-4 sm:p-6 border-t-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky bottom-0 z-20">
+        <div className="p-6 border-t-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky bottom-0 z-20">
           <button
             onClick={handleGenerate}
             disabled={isGenerating}

@@ -60,14 +60,14 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       <PublicNav onLaunch={onLaunch} />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 px-4 sm:pt-20 sm:pb-32 sm:px-6 overflow-hidden">
+      <section className="relative pt-20 pb-32 px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="text-4xl sm:text-6xl md:text-8xl font-serif font-black leading-[0.9] tracking-tighter mb-6 uppercase">
+            <h1 className="text-6xl md:text-8xl font-serif font-black leading-[0.9] tracking-tighter mb-6 uppercase">
               Craft Lessons.<br/>
               <span className="text-[var(--color-sage-green)] relative inline-block">
                 Not Stress.
