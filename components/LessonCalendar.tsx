@@ -95,10 +95,8 @@ function getSubjectColor(subject: string): string {
 
 export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
-  const [currentDate, setCurrentDate] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+
 
   const eventMap = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
