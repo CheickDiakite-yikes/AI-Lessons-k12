@@ -4,6 +4,21 @@ import { getAuthUser, unauthorizedResponse } from '@/lib/auth-server';
 import { eq, and } from 'drizzle-orm';
 import { deleteImage } from '@/lib/storage';
 
+function getSlideImageKeys(parameters: unknown): string[] {
+  if (!parameters || typeof parameters !== 'object') {
+    return [];
+  }
+
+  const maybeKeys = (parameters as Record<string, unknown>).slideImageKeys;
+  if (!Array.isArray(maybeKeys)) {
+    return [];
+  }
+
+  return maybeKeys
+    .filter((key): key is string => typeof key === 'string' && key.trim().length > 0)
+    .map((key) => key.trim());
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -90,6 +105,17 @@ export async function DELETE(
         await deleteImage(plan.imageKey);
       } catch (e) {
         console.error('Failed to delete image from storage:', e);
+      }
+    }
+
+    const slideImageKeys = Array.from(new Set(
+      getSlideImageKeys(plan.parameters).filter((key) => key.startsWith(`lesson-plans/${authUser.id}/`))
+    ));
+    for (const slideImageKey of slideImageKeys) {
+      try {
+        await deleteImage(slideImageKey);
+      } catch (e) {
+        console.error('Failed to delete slide image from storage:', e);
       }
     }
 

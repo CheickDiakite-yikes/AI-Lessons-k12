@@ -20,6 +20,20 @@ type SlideData = {
   bullets: string[];
 };
 
+function getLessonDayCount(planLength: string): number {
+  const normalized = planLength.trim().toLowerCase();
+
+  if (normalized === 'single lesson') return 1;
+  if (normalized === 'one week') return 5;
+  if (normalized === 'two weeks') return 10;
+  if (normalized === 'three weeks') return 15;
+  if (normalized === 'four weeks') return 20;
+  if (normalized === 'one quarter') return 45;
+  if (normalized === 'one semester') return 90;
+
+  return 1;
+}
+
 function getGeminiApiKey(): string {
   const key = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!key) {
@@ -34,41 +48,124 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
   const hasRoster = Boolean(params.studentsContext);
   const includeWorksheets = params.includeWorksheets;
   const includeSlides = params.includeSlides;
+  const lessonDayCount = getLessonDayCount(params.planLength);
+  const isMultiDayPlan = lessonDayCount > 1;
+  const worksheetGuidance = includeWorksheets
+    ? isMultiDayPlan
+      ? `- Daily Worksheets:
+    - Every day section must include one worksheet using this exact heading format:
+      - ### Worksheet (Day X)
+    - Each worksheet must include these exact subheadings in this order:
+      - #### Student Copy
+      - #### Answer Key
+      - #### Differentiation Note
+    - Student Copy must begin with: Name: ____________   Date: ____________
+    - In Student Copy, include these bold labels before the questions:
+      - **Standard Alignment:** [brief standard/skill focus]
+      - **Directions:** [clear student-facing directions]
+      - **Total Points:** [reasonable point total]
+    - Student Copy should include 6-8 questions/tasks that directly practice that day's objective.
+    - Use school-ready, formal worksheet language and clear spacing between numbered items.
+    - Keep question formatting simple and readable in plain markdown.
+`
+      : `- Worksheets:
+    - Provide exactly 3 worksheet sets with these exact headings in this order:
+      - ### Worksheet 1: Matching
+      - ### Worksheet 2: Fill in the Blank
+      - ### Worksheet 3: Multiple Choice
+    - For each worksheet, include these exact subheadings in this order:
+      - #### Student Copy
+      - #### Answer Key
+      - #### Differentiation Note
+    - Student Copy must begin with: Name: ____________   Date: ____________
+    - In Student Copy, include these bold labels before the questions:
+      - **Standard Alignment:** [brief standard/skill focus]
+      - **Directions:** [clear student-facing directions]
+      - **Total Points:** [reasonable point total]
+    - Matching worksheet format:
+      - Include "Terms" list with 6 numbered items.
+      - Include "Definitions" list with 6 lettered items (A-F).
+    - Fill in the Blank worksheet format:
+      - Include 8-10 numbered sentences.
+      - Each sentence has exactly one blank with underscores.
+    - Multiple Choice worksheet format:
+      - Include 8-10 numbered questions.
+      - Each question includes exactly 4 options, each on its own line as A), B), C), D).
+    - Answer key format:
+      - Matching: list answers as 1-A format.
+      - Fill in the Blank: list each number with expected answer.
+      - Multiple Choice: list number + correct letter + a short rationale (max 1 sentence).
+    - Use school-ready, formal worksheet language and clear spacing between numbered items.
+`
+    : '';
+  const slidesGuidance = includeSlides
+    ? `- Presentation Slides:
+    - Create one unit-level presentation outline, even when this is a multi-day plan.
+    - Provide a 6-8 slide outline.
+    - For each slide, use this exact format:
+      <SLIDE>
+      Title: [Slide title here]
+      Bullet: [First bullet point]
+      Bullet: [Second bullet point]
+      Bullet: [Third bullet point]
+      </SLIDE>
+    - Each slide must have a title and 3-5 bullet points.
+    - Make slides engaging, age-appropriate for ${params.gradeLevel}, and visually descriptive.
+    - Do NOT include visual prompts in the slides - just the title and bullet points.
+`
+    : '';
+  const sectionStructure = isMultiDayPlan
+    ? `
+1) Use this exact major section structure:
+- # [Creative Unit Title]
+- ## Unit Overview
+- ## Unit Goals and Standards
+- ## Scope and Sequence
+- Then include exactly ${lessonDayCount} day sections, each with this exact day heading pattern:
+  - ## Day X: [Daily Lesson Title]
+  - X must be consecutive from 1 to ${lessonDayCount}.
+${includeWorksheets || includeSlides ? '- ## Optional Generated Add-ons' : ''}
 
-  const prompt = `
-You are an expert Massachusetts elementary curriculum designer and master teacher.
+2) Section details:
+- Unit Overview:
+  - Grade Level and Subject
+  - Duration per lesson
+  - Brief unit snapshot (2-3 sentences)
 
-Generate a complete, highly practical K-6 lesson package in Markdown.
-Output must render cleanly in plain CommonMark.
+- Unit Goals and Standards:
+  - Learning Objectives:
+    - 4-6 unit-level measurable objectives.
+  - Relevant Standards (Massachusetts DESE):
+    - Include 2-4 standards with code and full description text when possible.
+    - Prefer official MA codes (for example: MA.3.MD.A.1).
+    - If exact official text is uncertain, write "Verify official DESE wording" after that standard.
+  - Key Questions:
+    - 3-5 essential questions that span the unit.
 
-Context:
-- Plan Length: ${params.planLength}
-- Grade Level: ${params.gradeLevel}
-- Subject: ${params.subject}
-- Lesson Duration: ${params.duration} minutes
-- English Proficiency Levels: ${params.englishProficiency.length ? params.englishProficiency.join(', ') : 'Not specified'}
-- Academic Levels: ${params.academicLevels.length ? params.academicLevels.join(', ') : 'Not specified'}
-- Auto-Generate Objectives: ${params.autoGenerate ? 'Yes' : 'No'}
-${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectives/Topics: ${params.manualObjectives}` : ''}
-- Include Worksheet Add-ons: ${includeWorksheets ? 'Yes' : 'No'}
-- Include Slide Add-ons: ${includeSlides ? 'Yes' : 'No'}
-${params.studentsContext ? `- Class Roster Context (use names for personalization):\n${params.studentsContext}` : ''}
+- Scope and Sequence:
+  - Provide exactly ${lessonDayCount} numbered entries (Day 1 through Day ${lessonDayCount}).
+  - For each entry include: focus skill, objective, and quick assessment idea.
 
-Formatting rules (strict):
-- Use ATX headings only (#, ##, ###, ####).
-- Do NOT use markdown tables, pipe characters, HTML tags, code fences, or horizontal rules.
-- Use bullet lists (-) and numbered lists extensively. Never write dense paragraphs.
-- Use **bold** for key terms, labels, and vocabulary words.
-- Use *italics* for teacher actions, student responses, and instructional cues.
-- Use sub-bullets (indented -) for details under main bullets.
-- Every section should use structured lists, not prose paragraphs.
-- Label items clearly: start bullets with a **Bold Label:** followed by content.
-- For timing in procedures, format as: **[X min]** at the start of each step.
-- Keep worksheet questions on separate lines.
-- For fill-in-the-blank, use at least 12 underscores: ____________.
-- For multiple choice, options must be on separate lines prefixed with A), B), C), D).
+- Each day section (## Day X: ...):
+  - ### Core Lesson Details
+    - Daily objective(s) and success criteria.
+  - ### Preparation and Materials
+    - Practical materials list and setup notes.
+  - ### Instruction and Activities
+    - Step-by-step flow with **[X min]** timing.
+    - Include teacher moves and expected student actions.
+    - Include one extension for early finishers.
+    - Keep each day concise and classroom-ready.
+  - ### Evaluation and Support
+    - In-lesson formative check and end-of-lesson check.
+    - Differentiation:
+${hasRoster ? '      - Hyper-personalize by named students from the roster and provide actionable modifications per student.' : '      - Provide actionable differentiation by WIDA levels and by academic level.'}
+${includeWorksheets ? '  - Include the daily worksheet block for that day in the same day section using the exact worksheet heading format above.' : ''}
 
-Output requirements:
+${includeWorksheets || includeSlides ? `- Optional Generated Add-ons:
+${worksheetGuidance}${slidesGuidance}` : ''}
+`
+    : `
 1) Use this exact major section structure:
 - # [Creative Lesson Title]
 - ## Core Lesson Details
@@ -118,42 +215,45 @@ ${hasRoster ? '    - Hyper-personalize by named students from the roster and pro
     - 2-3 practical tips including likely misconceptions and management moves.
 
 ${includeWorksheets || includeSlides ? `- Optional Generated Add-ons:
-${includeWorksheets ? `  - Worksheets:
-    - Provide exactly 3 worksheet sets with these exact headings in this order:
-      - ### Worksheet 1: Matching
-      - ### Worksheet 2: Fill in the Blank
-      - ### Worksheet 3: Multiple Choice
-    - For each worksheet, include these exact subheadings in this order:
-      - #### Student Copy
-      - #### Answer Key
-      - #### Differentiation Note
-    - Student Copy must begin with: Name: ____________   Date: ____________
-    - Matching worksheet format:
-      - Include "Terms" list with 6 numbered items.
-      - Include "Definitions" list with 6 lettered items (A-F).
-    - Fill in the Blank worksheet format:
-      - Include 8-10 numbered sentences.
-      - Each sentence has exactly one blank with underscores.
-    - Multiple Choice worksheet format:
-      - Include 8-10 numbered questions.
-      - Each question includes exactly 4 options, each on its own line as A), B), C), D).
-    - Answer key format:
-      - Matching: list answers as 1-A format.
-      - Fill in the Blank: list each number with expected answer.
-      - Multiple Choice: list number + correct letter + a short rationale (max 1 sentence).
-` : ''}${includeSlides ? `  - Presentation Slides:
-    - Provide a 6-8 slide outline.
-    - For each slide, use this exact format:
-      <SLIDE>
-      Title: [Slide title here]
-      Bullet: [First bullet point]
-      Bullet: [Second bullet point]
-      Bullet: [Third bullet point]
-      </SLIDE>
-    - Each slide must have a title and 3-5 bullet points.
-    - Make slides engaging, age-appropriate for ${params.gradeLevel}, and visually descriptive.
-    - Do NOT include visual prompts in the slides - just the title and bullet points.
-` : ''}` : ''}
+${worksheetGuidance}${slidesGuidance}` : ''}
+`;
+
+  const prompt = `
+You are an expert Massachusetts elementary curriculum designer and master teacher.
+
+Generate a complete, highly practical K-6 lesson package in Markdown.
+Output must render cleanly in plain CommonMark.
+
+Context:
+- Plan Length: ${params.planLength}
+- Grade Level: ${params.gradeLevel}
+- Subject: ${params.subject}
+- Lesson Duration: ${params.duration} minutes
+- English Proficiency Levels: ${params.englishProficiency.length ? params.englishProficiency.join(', ') : 'Not specified'}
+- Academic Levels: ${params.academicLevels.length ? params.academicLevels.join(', ') : 'Not specified'}
+- Auto-Generate Objectives: ${params.autoGenerate ? 'Yes' : 'No'}
+${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectives/Topics: ${params.manualObjectives}` : ''}
+- Include Worksheet Add-ons: ${includeWorksheets ? 'Yes' : 'No'}
+- Include Slide Add-ons: ${includeSlides ? 'Yes' : 'No'}
+${isMultiDayPlan ? `- This is a multi-day unit. You must produce exactly ${lessonDayCount} daily lesson sections.` : '- This is a single-day lesson.'}
+${params.studentsContext ? `- Class Roster Context (use names for personalization):\n${params.studentsContext}` : ''}
+
+Formatting rules (strict):
+- Use ATX headings only (#, ##, ###, ####).
+- Do NOT use markdown tables, pipe characters, HTML tags, code fences, or horizontal rules.
+- Use bullet lists (-) and numbered lists extensively. Never write dense paragraphs.
+- Use **bold** for key terms, labels, and vocabulary words.
+- Use *italics* for teacher actions, student responses, and instructional cues.
+- Use sub-bullets (indented -) for details under main bullets.
+- Every section should use structured lists, not prose paragraphs.
+- Label items clearly: start bullets with a **Bold Label:** followed by content.
+- For timing in procedures, format as: **[X min]** at the start of each step.
+- Keep worksheet questions on separate lines.
+- For fill-in-the-blank, use at least 12 underscores: ____________.
+- For multiple choice, options must be on separate lines prefixed with A), B), C), D).
+
+Output requirements:
+${sectionStructure}
 
 3) Tone:
 - Professional, classroom-ready, concise but specific.

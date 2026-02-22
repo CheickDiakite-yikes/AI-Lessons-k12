@@ -259,6 +259,48 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
+.worksheet-export-sheet {
+  background: #fff;
+}
+
+.worksheet-export-header {
+  border: 2px solid var(--color-deep-ink);
+  background: #f8f4ee;
+  padding: 0.8rem 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.worksheet-export-title {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: var(--color-deep-ink);
+  margin: 0;
+}
+
+.worksheet-export-context {
+  margin-top: 0.4rem;
+  margin-bottom: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-charcoal-grey);
+}
+
+.worksheet-export-fields {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.worksheet-export-body .worksheet-title {
+  margin-top: 0;
+}
+
 @media (max-width: 768px) {
   .lesson-markdown {
     font-size: 1rem;

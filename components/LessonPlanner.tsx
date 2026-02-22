@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, isValidElement, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check, CheckCircle2, Circle, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check, CheckCircle2, Circle, Loader2, FileDown } from 'lucide-react';
 import Markdown, { type Components } from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
@@ -34,6 +34,104 @@ type ClassRoster = {
   name: string;
   students: Student[];
 };
+
+type DaySection = {
+  dayNumber: number;
+  title: string;
+  markdown: string;
+};
+
+type ParsedDayPlan = {
+  unitIntro: string;
+  unitOutro: string;
+  daySections: DaySection[];
+};
+
+type WorksheetSection = {
+  id: string;
+  title: string;
+  markdown: string;
+  studentMarkdown: string;
+  answerKeyMarkdown: string | null;
+};
+
+type WorksheetExportMode = 'student' | 'answer';
+
+function extractSlideImageKeys(parameters: unknown): (string | null)[] {
+  if (!parameters || typeof parameters !== 'object') {
+    return [];
+  }
+
+  const maybeKeys = (parameters as Record<string, unknown>).slideImageKeys;
+  if (!Array.isArray(maybeKeys)) {
+    return [];
+  }
+
+  return maybeKeys.map((value) => {
+    if (typeof value !== 'string') {
+      return null;
+    }
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  });
+}
+
+function toFileSlug(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return slug || 'worksheet';
+}
+
+function extractWorksheetSubsection(sectionMarkdown: string, headingText: string): string | null {
+  const lines = sectionMarkdown.split('\n');
+  const headingRegex = new RegExp(`^####\\s+${headingText}\\b`, 'i');
+  const start = lines.findIndex((line) => headingRegex.test(line.trim()));
+  if (start < 0) {
+    return null;
+  }
+
+  const end = lines.findIndex((line, index) => index > start && /^####\s+/.test(line.trim()));
+  const titleLine = lines[0] || '### Worksheet';
+  const subsection = lines.slice(start, end >= 0 ? end : lines.length).join('\n').trim();
+  return [titleLine, subsection].filter(Boolean).join('\n\n').trim();
+}
+
+function extractWorksheetSections(markdown: string): WorksheetSection[] {
+  if (!markdown.trim()) {
+    return [];
+  }
+
+  const lines = markdown.split('\n');
+  const worksheetIndexes: number[] = [];
+  const worksheetHeadingRegex = /^###\s+Worksheet\b/i;
+
+  lines.forEach((line, index) => {
+    if (worksheetHeadingRegex.test(line.trim())) {
+      worksheetIndexes.push(index);
+    }
+  });
+
+  return worksheetIndexes.map((startIndex, index) => {
+    const nextBoundaryIndex = lines.findIndex((line, lineIndex) => lineIndex > startIndex && /^#{1,3}\s+/.test(line.trim()));
+    const endIndex = nextBoundaryIndex >= 0 ? nextBoundaryIndex : lines.length;
+    const markdownSection = lines.slice(startIndex, endIndex).join('\n').trim();
+    const rawTitle = (lines[startIndex] || `### Worksheet ${index + 1}`).replace(/^###\s+/, '').trim();
+    const studentMarkdown = extractWorksheetSubsection(markdownSection, 'Student Copy') || markdownSection;
+    const answerKeyMarkdown = extractWorksheetSubsection(markdownSection, 'Answer Key');
+
+    return {
+      id: `${toFileSlug(rawTitle)}-${index + 1}`,
+      title: rawTitle || `Worksheet ${index + 1}`,
+      markdown: markdownSection,
+      studentMarkdown,
+      answerKeyMarkdown,
+    };
+  }).filter((section) => section.markdown.length > 0);
+}
 
 function getNodeText(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') {
@@ -80,6 +178,69 @@ function getListItemClass(text: string): string {
     return 'lesson-li worksheet-question-line';
   }
   return 'lesson-li';
+}
+
+function parsePlanByDay(markdown: string): ParsedDayPlan {
+  if (!markdown.trim()) {
+    return {
+      unitIntro: '',
+      unitOutro: '',
+      daySections: [],
+    };
+  }
+
+  const lines = markdown.split('\n');
+  const h2Indexes: number[] = [];
+  const dayHeadingRegex = /^##\s+Day\s+(\d+)\s*:?\s*(.*)$/i;
+  const dayHeadings: Array<{ index: number; dayNumber: number; title: string }> = [];
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    if (/^##\s+/.test(trimmed)) {
+      h2Indexes.push(index);
+    }
+
+    const match = trimmed.match(dayHeadingRegex);
+    if (!match) {
+      return;
+    }
+
+    dayHeadings.push({
+      index,
+      dayNumber: Number(match[1]),
+      title: match[2]?.trim() || `Day ${match[1]}`,
+    });
+  });
+
+  if (!dayHeadings.length) {
+    return {
+      unitIntro: '',
+      unitOutro: '',
+      daySections: [],
+    };
+  }
+
+  const sortedDayHeadings = [...dayHeadings].sort((a, b) => a.index - b.index);
+  const unitIntro = lines.slice(0, sortedDayHeadings[0].index).join('\n').trim();
+  const daySections = sortedDayHeadings.map((heading) => {
+    const nextH2Index = h2Indexes.find((idx) => idx > heading.index) ?? lines.length;
+    const markdownChunk = lines.slice(heading.index, nextH2Index).join('\n').trim();
+    return {
+      dayNumber: heading.dayNumber,
+      title: heading.title,
+      markdown: markdownChunk,
+    };
+  }).filter((day) => day.markdown.length > 0);
+  const lastDay = daySections[daySections.length - 1];
+  const lastDayHeadingIndex = sortedDayHeadings[sortedDayHeadings.length - 1].index;
+  const lastDayEnd = h2Indexes.find((idx) => idx > lastDayHeadingIndex) ?? lines.length;
+  const unitOutro = lastDay ? lines.slice(lastDayEnd).join('\n').trim() : '';
+
+  return {
+    unitIntro,
+    unitOutro,
+    daySections,
+  };
 }
 
 function CustomSelect({ 
@@ -223,6 +384,7 @@ export function LessonPlanner() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string | null>(null);
   const [lessonOverview, setLessonOverview] = useState<string | null>(null);
@@ -231,6 +393,7 @@ export function LessonPlanner() {
   const [savedPlans, setSavedPlans] = useState<any[]>([]);
   const [generationPhase, setGenerationPhase] = useState(0);
   const [slideImages, setSlideImages] = useState<(string | null)[]>([]);
+  const [slideImageKeys, setSlideImageKeys] = useState<(string | null)[]>([]);
   const [slidesGenerating, setSlidesGenerating] = useState(false);
   const [slidesProgress, setSlidesProgress] = useState({ current: 0, total: 0 });
   const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -242,8 +405,53 @@ export function LessonPlanner() {
   }, []);
 
   const contentRef = useRef<HTMLDivElement>(null);
+  const allDaysExportRef = useRef<HTMLDivElement>(null);
+  const worksheetExportRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const rosterRef = useRef<HTMLDivElement>(null);
   const renderedPlan = useMemo(() => normalizeLessonMarkdown(generatedPlan ?? ''), [generatedPlan]);
+  const parsedPlan = useMemo(() => parsePlanByDay(renderedPlan), [renderedPlan]);
+  const hasDaySections = parsedPlan.daySections.length > 0;
+  const hasMultipleDays = parsedPlan.daySections.length > 1;
+  const resolvedDayIndex = hasDaySections
+    ? Math.min(activeDayIndex, parsedPlan.daySections.length - 1)
+    : 0;
+  const selectedDaySection = hasDaySections ? parsedPlan.daySections[resolvedDayIndex] : null;
+  const displayPlanMarkdown = selectedDaySection?.markdown ?? renderedPlan;
+  const visibleWorksheetSections = useMemo(
+    () => extractWorksheetSections(displayPlanMarkdown),
+    [displayPlanMarkdown]
+  );
+  const allDaysPlanMarkdown = useMemo(() => {
+    if (!hasDaySections) {
+      return renderedPlan;
+    }
+
+    const sections = [
+      parsedPlan.unitIntro,
+      ...parsedPlan.daySections.map((day) => day.markdown),
+      parsedPlan.unitOutro,
+    ].filter(Boolean);
+
+    return sections.join('\n\n');
+  }, [hasDaySections, parsedPlan, renderedPlan]);
+
+  useEffect(() => {
+    setActiveDayIndex(0);
+  }, [generatedPlan]);
+
+  useEffect(() => {
+    const keepRefKeys = new Set<string>();
+    visibleWorksheetSections.forEach((section) => {
+      keepRefKeys.add(`${section.id}-student`);
+      keepRefKeys.add(`${section.id}-answer`);
+    });
+
+    Object.keys(worksheetExportRefs.current).forEach((key) => {
+      if (!keepRefKeys.has(key)) {
+        delete worksheetExportRefs.current[key];
+      }
+    });
+  }, [visibleWorksheetSections]);
 
   const markdownComponents = useMemo<Components>(() => ({
     h1: ({ children }) => <h1 className="lesson-h1">{children}</h1>,
@@ -319,6 +527,7 @@ export function LessonPlanner() {
     setGeneratedImage(null);
     setImagePrompt(null);
     setSlideImages([]);
+    setSlideImageKeys([]);
     setSlidesGenerating(false);
     setGenerationPhase(0);
     
@@ -365,6 +574,7 @@ export function LessonPlanner() {
       setGeneratedPlan(plan.text);
       
       let image: string | null = null;
+      let persistedSlideImageKeys: (string | null)[] = [];
       if (plan.lessonOverview) {
         setLessonOverview(plan.lessonOverview);
       }
@@ -382,6 +592,7 @@ export function LessonPlanner() {
         setSlidesGenerating(true);
         setSlidesProgress({ current: 0, total: plan.slides.length });
         const slideImgs: (string | null)[] = new Array(plan.slides.length).fill(null);
+        persistedSlideImageKeys = new Array(plan.slides.length).fill(null);
         setSlideImages([...slideImgs]);
 
         for (let i = 0; i < plan.slides.length; i++) {
@@ -412,6 +623,22 @@ Design requirements:
             console.error(`Failed to generate slide ${i + 1}:`, slideErr);
           }
         }
+
+        for (let i = 0; i < slideImgs.length; i++) {
+          const slideImageBase64 = slideImgs[i];
+          if (!slideImageBase64) {
+            continue;
+          }
+
+          try {
+            const uploaded = await api.images.upload(slideImageBase64, `slide-${i + 1}`);
+            persistedSlideImageKeys[i] = uploaded.imageKey;
+          } catch (uploadErr) {
+            console.error(`Failed to upload slide ${i + 1}:`, uploadErr);
+          }
+        }
+
+        setSlideImageKeys([...persistedSlideImageKeys]);
         setSlidesGenerating(false);
       }
 
@@ -429,7 +656,7 @@ Design requirements:
           subject,
           duration,
           classRosterId: selectedClassId || undefined,
-          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides },
+          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: persistedSlideImageKeys },
         });
         setCurrentPlanId(saved.id);
         setSavedPlans(prev => [saved, ...prev]);
@@ -450,20 +677,25 @@ Design requirements:
   };
 
   const handleExportPDF = async () => {
-    if (!contentRef.current) return;
+    const exportNode = hasMultipleDays
+      ? allDaysExportRef.current || contentRef.current
+      : contentRef.current;
+
+    if (!exportNode) return;
     
-    // Dynamically import html2pdf to avoid SSR issues
     const html2pdf = (await import('html2pdf.js')).default;
-    const exportNode = contentRef.current;
     
     const opt = {
       margin:       10,
-      filename:     `Lesson_Plan_${subject}_${gradeLevel}.pdf`,
+      filename:     hasMultipleDays
+        ? `Lesson_Plan_${subject}_${gradeLevel}_All_Days.pdf`
+        : `Lesson_Plan_${subject}_${gradeLevel}.pdf`,
       image:        { type: 'jpeg' as const, quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true },
       jsPDF:        { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }
     };
 
+    exportNode.style.visibility = 'visible';
     exportNode.classList.add('pdf-export-mode');
     document.body.classList.add('pdf-exporting');
 
@@ -476,6 +708,54 @@ Design requirements:
     } finally {
       exportNode.classList.remove('pdf-export-mode');
       document.body.classList.remove('pdf-exporting');
+      if (exportNode !== contentRef.current) exportNode.style.visibility = 'hidden';
+    }
+  };
+
+  const handleExportWorksheet = async (worksheet: WorksheetSection, mode: WorksheetExportMode) => {
+    const refKey = `${worksheet.id}-${mode}`;
+    const exportNode = worksheetExportRefs.current[refKey];
+    if (!exportNode) {
+      return;
+    }
+
+    const html2pdf = (await import('html2pdf.js')).default;
+    const worksheetTitleSlug = toFileSlug(worksheet.title);
+    const daySlug = hasDaySections
+      ? `day-${selectedDaySection?.dayNumber ?? resolvedDayIndex + 1}`
+      : 'single-lesson';
+    const modeSlug = mode === 'student' ? 'student-copy' : 'answer-key';
+    const filename = [
+      'worksheet',
+      daySlug,
+      worksheetTitleSlug,
+      modeSlug,
+      toFileSlug(subject),
+      toFileSlug(gradeLevel),
+    ].join('_') + '.pdf';
+
+    const opt = {
+      margin:       10,
+      filename,
+      image:        { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }
+    };
+
+    const parentContainer = exportNode.closest('[aria-hidden="true"]') as HTMLElement | null;
+    if (parentContainer) parentContainer.style.visibility = 'visible';
+    exportNode.classList.add('pdf-export-mode');
+    document.body.classList.add('pdf-exporting');
+
+    try {
+      await html2pdf().set(opt).from(exportNode).save();
+    } catch (error) {
+      console.error('Failed to export worksheet PDF:', error);
+      alert('Failed to export worksheet PDF. Please try again.');
+    } finally {
+      exportNode.classList.remove('pdf-export-mode');
+      document.body.classList.remove('pdf-exporting');
+      if (parentContainer) parentContainer.style.visibility = 'hidden';
     }
   };
 
@@ -516,7 +796,7 @@ Design requirements:
         subject,
         duration,
         classRosterId: selectedClassId || null,
-        parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides },
+        parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: slideImageKeys },
       });
       triggerConfetti();
     } catch (error) {
@@ -1019,15 +1299,36 @@ Design requirements:
                           setCurrentPlanId(plan.id);
                           setImagePrompt(plan.imagePrompt || null);
                           setLessonOverview(plan.lessonOverview || null);
+                          setSlidesGenerating(false);
+                          setSlidesProgress({ current: 0, total: 0 });
                           if (plan.imageKey) {
                             api.fetchImageAsDataUrl(plan.imageKey).then(setGeneratedImage).catch(() => setGeneratedImage(null));
                           } else {
                             setGeneratedImage(null);
                           }
+                          const savedSlideKeys = extractSlideImageKeys(plan.parameters);
+                          setSlideImageKeys(savedSlideKeys);
+                          if (savedSlideKeys.length > 0) {
+                            Promise.all(
+                              savedSlideKeys.map((slideKey) => {
+                                if (!slideKey) {
+                                  return Promise.resolve(null);
+                                }
+                                return api.fetchImageAsDataUrl(slideKey).catch(() => null);
+                              })
+                            ).then(setSlideImages);
+                          } else {
+                            setSlideImages([]);
+                          }
                           if (plan.planLength) setPlanLength(plan.planLength);
                           if (plan.gradeLevel) setGradeLevel(plan.gradeLevel);
                           if (plan.subject) setSubject(plan.subject);
                           if (plan.duration) setDuration(plan.duration);
+                          if (plan.parameters && typeof plan.parameters === 'object') {
+                            const params = plan.parameters as Record<string, unknown>;
+                            if (params.includeSlides !== undefined) setIncludeSlides(Boolean(params.includeSlides));
+                            if (params.includeWorksheets !== undefined) setIncludeWorksheets(Boolean(params.includeWorksheets));
+                          }
                           setCurrentView('planner');
                           setIsInputPanelOpen(false);
                         }}
@@ -1053,6 +1354,8 @@ Design requirements:
                                     setCurrentPlanId(null);
                                     setGeneratedPlan(null);
                                     setGeneratedImage(null);
+                                    setSlideImages([]);
+                                    setSlideImageKeys([]);
                                   }
                                 }).catch(err => console.error('Failed to delete:', err));
                               }
@@ -1369,7 +1672,6 @@ Design requirements:
           backgroundImage: 'linear-gradient(var(--color-concrete-light) 1px, transparent 1px), linear-gradient(90deg, var(--color-concrete-light) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           backgroundPosition: '-1px -1px',
-          opacity: 0.8
         }}>
           <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-6 md:p-10 relative z-10 lesson-paper" ref={contentRef}>
             
@@ -1462,9 +1764,104 @@ Design requirements:
                       </div>
                     )}
 
+                    {hasDaySections && parsedPlan.unitIntro && (
+                      <div className="lesson-markdown mb-8">
+                        <Markdown components={markdownComponents}>{parsedPlan.unitIntro}</Markdown>
+                      </div>
+                    )}
+
+                    {hasMultipleDays && (
+                      <div className="mb-6 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] p-3 md:p-4 shadow-[3px_3px_0px_0px_var(--color-deep-ink)]">
+                        <div className="flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setActiveDayIndex((prev) => Math.max(0, prev - 1))}
+                            disabled={resolvedDayIndex === 0}
+                            className="flex items-center gap-1 px-2 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-whisper-white)]"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                            Prev
+                          </button>
+                          <p className="text-sm md:text-base font-bold text-[var(--color-deep-ink)] text-center">
+                            Day {selectedDaySection?.dayNumber ?? resolvedDayIndex + 1} of {parsedPlan.daySections.length}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setActiveDayIndex((prev) => Math.min(parsedPlan.daySections.length - 1, prev + 1))}
+                            disabled={resolvedDayIndex >= parsedPlan.daySections.length - 1}
+                            className="flex items-center gap-1 px-2 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-whisper-white)]"
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                          {parsedPlan.daySections.map((day, index) => (
+                            <button
+                              key={`${day.dayNumber}-${index}`}
+                              type="button"
+                              onClick={() => setActiveDayIndex(index)}
+                              className={`shrink-0 px-2.5 py-1.5 border-2 border-[var(--color-deep-ink)] text-xs font-bold transition-colors ${index === resolvedDayIndex ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-whisper-white)]'}`}
+                            >
+                              Day {day.dayNumber}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {visibleWorksheetSections.length > 0 && (
+                      <div className="mb-6 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] p-3 md:p-4 shadow-[3px_3px_0px_0px_var(--color-deep-ink)] no-print">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                          <h3 className="font-serif font-bold text-[var(--color-deep-ink)] text-lg flex items-center gap-2">
+                            <FileDown className="w-5 h-5" /> Worksheet Downloads
+                          </h3>
+                          <p className="text-xs font-mono text-[var(--color-charcoal-grey)]">
+                            {hasDaySections
+                              ? `Day ${selectedDaySection?.dayNumber ?? resolvedDayIndex + 1} worksheets`
+                              : 'Lesson worksheets'}
+                          </p>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {visibleWorksheetSections.map((worksheet) => (
+                            <div
+                              key={worksheet.id}
+                              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 border border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] p-2.5"
+                            >
+                              <p className="font-bold text-sm text-[var(--color-deep-ink)]">{worksheet.title}</p>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleExportWorksheet(worksheet, 'student')}
+                                  className="px-2.5 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white text-xs font-bold hover:bg-[#5a8a6f] transition-colors"
+                                >
+                                  Student Copy PDF
+                                </button>
+                                {worksheet.answerKeyMarkdown && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleExportWorksheet(worksheet, 'answer')}
+                                    className="px-2.5 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] text-[var(--color-deep-ink)] text-xs font-bold hover:bg-[#ddd4ca] transition-colors"
+                                  >
+                                    Answer Key PDF
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="lesson-markdown">
-                      <Markdown components={markdownComponents}>{renderedPlan}</Markdown>
+                      <Markdown components={markdownComponents}>{displayPlanMarkdown}</Markdown>
                     </div>
+
+                    {hasDaySections && parsedPlan.unitOutro && (
+                      <div className="lesson-markdown mt-8">
+                        <Markdown components={markdownComponents}>{parsedPlan.unitOutro}</Markdown>
+                      </div>
+                    )}
 
                     {(slideImages.length > 0 || slidesGenerating) && (
                       <div className="mt-10 pt-8 border-t-3 border-[var(--color-deep-ink)]">
@@ -1504,6 +1901,67 @@ Design requirements:
               </AnimatePresence>
             </div>
           </div>
+
+          {hasMultipleDays && generatedPlan && (
+            <div
+              ref={allDaysExportRef}
+              aria-hidden="true"
+              className="fixed top-0 -left-[20000px] w-[1000px] bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] p-10 pointer-events-none"
+              style={{ visibility: 'hidden' }}
+            >
+              <div className="lesson-markdown">
+                <Markdown components={markdownComponents}>{allDaysPlanMarkdown}</Markdown>
+              </div>
+            </div>
+          )}
+
+          {visibleWorksheetSections.length > 0 && (
+            <div aria-hidden="true" className="fixed top-0 -left-[22000px] w-[860px] pointer-events-none" style={{ visibility: 'hidden' }}>
+              {visibleWorksheetSections.map((worksheet) => {
+                const dayLabel = hasDaySections
+                  ? `Day ${selectedDaySection?.dayNumber ?? resolvedDayIndex + 1}`
+                  : 'Single Lesson';
+                const contextLine = `${subject} | ${gradeLevel} | ${planLength} | ${dayLabel}`;
+
+                return (
+                  <div key={worksheet.id}>
+                    <div
+                      ref={(node) => { worksheetExportRefs.current[`${worksheet.id}-student`] = node; }}
+                      className="worksheet-export-sheet bg-white border-2 border-[var(--color-deep-ink)] p-8 mb-8"
+                    >
+                      <div className="worksheet-export-header">
+                        <h2 className="worksheet-export-title">{worksheet.title} - Student Copy</h2>
+                        <p className="worksheet-export-context">{contextLine}</p>
+                        <div className="worksheet-export-fields">
+                          <span>Name: __________________________</span>
+                          <span>Date: __________________</span>
+                          <span>Class: __________________________</span>
+                        </div>
+                      </div>
+                      <div className="lesson-markdown worksheet-export-body">
+                        <Markdown components={markdownComponents}>{worksheet.studentMarkdown}</Markdown>
+                      </div>
+                    </div>
+
+                    {worksheet.answerKeyMarkdown && (
+                      <div
+                        ref={(node) => { worksheetExportRefs.current[`${worksheet.id}-answer`] = node; }}
+                        className="worksheet-export-sheet bg-white border-2 border-[var(--color-deep-ink)] p-8 mb-8"
+                      >
+                        <div className="worksheet-export-header">
+                          <h2 className="worksheet-export-title">{worksheet.title} - Answer Key</h2>
+                          <p className="worksheet-export-context">{contextLine}</p>
+                        </div>
+                        <div className="lesson-markdown worksheet-export-body">
+                          <Markdown components={markdownComponents}>{worksheet.answerKeyMarkdown}</Markdown>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

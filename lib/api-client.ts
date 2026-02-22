@@ -16,6 +16,14 @@ export const api = {
     get: () => fetchApi('/api/users/sync'),
   },
 
+  images: {
+    upload: (imageBase64: string, identifier?: string) =>
+      fetchApi<{ imageKey: string }>('/api/images/upload', {
+        method: 'POST',
+        body: JSON.stringify({ imageBase64, identifier }),
+      }),
+  },
+
   classRosters: {
     list: () => fetchApi<any[]>('/api/class-rosters'),
     create: (name: string) =>
@@ -45,6 +53,7 @@ export const api = {
       title?: string;
       content: string;
       imagePrompt?: string;
+      lessonOverview?: string;
       imageBase64?: string;
       planLength?: string;
       gradeLevel?: string;
