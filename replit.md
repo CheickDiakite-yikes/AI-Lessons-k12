@@ -106,3 +106,5 @@ drizzle.config.ts             - Drizzle Kit configuration
 - **Cookie-based API auth**: API routes use NextAuth session cookies instead of Bearer tokens
 - All data persistence handled by PostgreSQL via Drizzle ORM
 - Integrated Replit Object Storage for lesson images and profile pictures
+- **Functional lesson calendar**: LessonCalendar component shows saved plans on a Mon-Fri school-day grid with month/week toggle, color-coded by subject (ELA, Math, Science, etc.), multi-day plans span consecutive weekdays based on planLength, clickable days load the plan at the correct day index
+- **Start date picker**: Added start_date field (varchar YYYY-MM-DD) to lesson_plans schema, date picker in input form, auto-saved on create/update
