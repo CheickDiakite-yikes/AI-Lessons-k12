@@ -93,9 +93,15 @@ function getSubjectColor(subject: string): string {
   return 'bg-[var(--color-sage-green)] text-white';
 }
 
+function getTodayET(): Date {
+  const nowStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  const [y, m, d] = nowStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
-  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [currentDate, setCurrentDate] = useState(() => getTodayET());
 
 
   const eventMap = useMemo(() => {
@@ -183,7 +189,7 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
     return days;
   }, [currentDate]);
 
-  const today = dateKey(new Date());
+  const today = dateKey(getTodayET());
 
   const weekLabel = useMemo(() => {
     if (weekDays.length < 5) return '';
