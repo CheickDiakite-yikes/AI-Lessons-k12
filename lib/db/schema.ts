@@ -3,9 +3,10 @@ import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
-  googleId: varchar('google_id', { length: 128 }).notNull(),
+  googleId: varchar('google_id', { length: 128 }),
   email: varchar('email', { length: 255 }).notNull(),
   name: varchar('name', { length: 255 }).notNull(),
+  passwordHash: text('password_hash'),
   role: varchar('role', { length: 50 }).notNull().default('teacher'),
   school: varchar('school', { length: 255 }),
   howDidYouHear: varchar('how_did_you_hear', { length: 255 }),
@@ -14,7 +15,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
   uniqueIndex('users_google_id_idx').on(table.googleId),
-  index('users_email_idx').on(table.email),
+  uniqueIndex('users_email_idx').on(table.email),
 ]);
 
 export const classRosters = pgTable('class_rosters', {
