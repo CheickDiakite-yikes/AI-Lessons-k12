@@ -51,4 +51,6 @@ Firebase config is stored in `firebase-applet-config.json` with project ID `didi
 ## Recent Changes
 - Downgraded Next.js from 15.5 to 15.3.3 (SWC compatibility with Replit)
 - Added `allowedDevOrigins` for Replit proxy compatibility
-- Configured deployment for autoscale mode
+- Configured deployment for autoscale mode with standalone output
+- Fixed webpack watch options to use polling (2s interval) to prevent HMR infinite recompilation loop on Replit's virtual filesystem
+- Production deployment: `npm run build` then `npm run start` (PORT and HOSTNAME set in production env vars)
