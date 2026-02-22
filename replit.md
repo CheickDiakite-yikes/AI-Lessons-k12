@@ -80,10 +80,11 @@ Firebase Auth handles authentication; user profiles are synced to PostgreSQL on 
 - Production: Uses standalone output mode
 
 ## Recent Changes
-- Added PostgreSQL database with Drizzle ORM (users, class_rosters, students, lesson_plans tables)
+- Removed Firestore dependency from firebase.ts - no more old Firebase database connection
+- Firebase is now used ONLY for authentication (Google Sign-In + Email/Password)
+- All data persistence handled by PostgreSQL via Drizzle ORM
 - Integrated Replit Object Storage for lesson images and profile pictures
 - Added API routes for all CRUD operations with Firebase token authentication
-- Migrated from Firestore to PostgreSQL for data persistence
 - Class rosters and students now persist across sessions
 - Generated lesson plans auto-save to database with images stored in object storage
 - Login/signup pages simplified to use Firebase Auth + PostgreSQL sync
