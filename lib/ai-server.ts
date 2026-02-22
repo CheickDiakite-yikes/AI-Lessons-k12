@@ -159,10 +159,11 @@ ${includeWorksheets ? `  - Worksheets:
 - Professional, classroom-ready, concise but specific.
 - Avoid generic fluff.
 
-4) End tag for hero image:
-- At the very end, include exactly one image prompt wrapped in:
+4) End tags (at the very end of your response, after all lesson content):
+- Include a 1-2 sentence overview/blurb summarizing the lesson or unit in:
+<LESSON_OVERVIEW>...</LESSON_OVERVIEW>
+- Include exactly one image prompt describing a classroom-safe illustration in:
 <IMAGE_PROMPT>...</IMAGE_PROMPT>
-- This prompt should describe a single classroom-safe illustration representing the lesson.
   `;
 
   const response = await ai.models.generateContent({
@@ -178,6 +179,12 @@ ${includeWorksheets ? `  - Worksheets:
   const match = text.match(/<IMAGE_PROMPT>([\s\S]*?)<\/IMAGE_PROMPT>/);
   if (match && match[1]) {
     imagePrompt = match[1].trim();
+  }
+
+  let lessonOverview: string | null = null;
+  const overviewMatch = text.match(/<LESSON_OVERVIEW>([\s\S]*?)<\/LESSON_OVERVIEW>/);
+  if (overviewMatch && overviewMatch[1]) {
+    lessonOverview = overviewMatch[1].trim();
   }
 
   const slides: SlideData[] = [];
@@ -197,6 +204,7 @@ ${includeWorksheets ? `  - Worksheets:
 
   let cleanText = text
     .replace(/<IMAGE_PROMPT>[\s\S]*?<\/IMAGE_PROMPT>/g, '')
+    .replace(/<LESSON_OVERVIEW>[\s\S]*?<\/LESSON_OVERVIEW>/g, '')
     .replace(/<SLIDE>[\s\S]*?<\/SLIDE>/g, '')
     .trim();
 
@@ -209,6 +217,7 @@ ${includeWorksheets ? `  - Worksheets:
   return {
     text: cleanText,
     imagePrompt,
+    lessonOverview,
     slides,
   };
 }

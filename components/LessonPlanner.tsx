@@ -225,6 +225,7 @@ export function LessonPlanner() {
   const [generatedPlan, setGeneratedPlan] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string | null>(null);
+  const [lessonOverview, setLessonOverview] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [savedPlans, setSavedPlans] = useState<any[]>([]);
@@ -364,6 +365,9 @@ export function LessonPlanner() {
       setGeneratedPlan(plan.text);
       
       let image: string | null = null;
+      if (plan.lessonOverview) {
+        setLessonOverview(plan.lessonOverview);
+      }
       if (plan.imagePrompt) {
         setImagePrompt(plan.imagePrompt);
         setIsGeneratingImage(true);
@@ -418,6 +422,7 @@ Design requirements:
         const saved: any = await api.lessonPlans.create({
           content: plan.text,
           imagePrompt: plan.imagePrompt || undefined,
+          lessonOverview: plan.lessonOverview || undefined,
           imageBase64: image || undefined,
           planLength,
           gradeLevel,
@@ -1013,6 +1018,7 @@ Design requirements:
                           setGeneratedPlan(plan.content);
                           setCurrentPlanId(plan.id);
                           setImagePrompt(plan.imagePrompt || null);
+                          setLessonOverview(plan.lessonOverview || null);
                           if (plan.imageKey) {
                             api.fetchImageAsDataUrl(plan.imageKey).then(setGeneratedImage).catch(() => setGeneratedImage(null));
                           } else {
@@ -1448,9 +1454,11 @@ Design requirements:
                         ) : (
                           <img src={generatedImage!} alt="Lesson Plan Illustration" className="w-full h-auto object-cover border-2 border-[var(--color-deep-ink)]" />
                         )}
-                        <p className="text-xs md:text-sm font-mono text-[var(--color-charcoal-grey)] mt-2 text-center italic">
-                          {imagePrompt}
-                        </p>
+                        {lessonOverview && (
+                          <p className="text-xs md:text-sm font-serif text-[var(--color-charcoal-grey)] mt-2 text-center italic leading-relaxed">
+                            {lessonOverview}
+                          </p>
+                        )}
                       </div>
                     )}
 

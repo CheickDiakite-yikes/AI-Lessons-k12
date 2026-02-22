@@ -35,7 +35,7 @@ export type SlideData = {
 };
 
 export async function generateLessonPlan(params: LessonPlanParams) {
-  return postJson<{ text: string; imagePrompt: string | null; slides: SlideData[] }>('/api/ai/lesson-plan', params);
+  return postJson<{ text: string; imagePrompt: string | null; lessonOverview: string | null; slides: SlideData[] }>('/api/ai/lesson-plan', params);
 }
 
 export async function generateImage(prompt: string): Promise<string> {

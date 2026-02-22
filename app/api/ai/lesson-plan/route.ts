@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     return Response.json({
       text: plan.text,
       imagePrompt: plan.imagePrompt,
+      lessonOverview: plan.lessonOverview,
       slides: plan.slides || [],
     });
   } catch (error) {

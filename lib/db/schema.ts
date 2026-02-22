@@ -55,6 +55,7 @@ export const lessonPlans = pgTable('lesson_plans', {
   duration: varchar('duration', { length: 50 }),
   content: text('content').notNull(),
   imagePrompt: text('image_prompt'),
+  lessonOverview: text('lesson_overview'),
   imageKey: text('image_key'),
   parameters: jsonb('parameters'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
