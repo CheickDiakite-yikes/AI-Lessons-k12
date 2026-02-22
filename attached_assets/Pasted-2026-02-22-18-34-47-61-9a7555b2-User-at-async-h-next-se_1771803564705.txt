@@ -1,0 +1,164 @@
+2026-02-22 18:34:47.61
+9a7555b2
+User
+at async h (.next/server/chunks/426.js:204:8)
+2026-02-22 18:34:47.61
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:34:47.61
+9a7555b2
+User
+at async cm.generateContent (.next/server/chunks/344.js:1:181333)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at b7 (.next/server/chunks/344.js:1:157542)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at async (.next/server/chunks/344.js:1:152848)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at async k (.next/server/app/api/ai/lesson-plan/route.js:1:5568) {
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at async z (.next/server/app/api/ai/lesson-plan/route.js:1:2253)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at async cm.generateContent (.next/server/chunks/344.js:1:181333)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:34:48.88
+9a7555b2
+User
+at async h (.next/server/chunks/426.js:204:8)
+2026-02-22 18:34:48.88
+9a7555b2
+User
+status: 404
+2026-02-22 18:34:48.88
+9a7555b2
+User
+}
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at async k (.next/server/app/api/ai/lesson-plan/route.js:1:5568) {
+2026-02-22 18:34:52.07
+9a7555b2
+User
+}
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at async z (.next/server/app/api/ai/lesson-plan/route.js:1:2253)
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at async (.next/server/chunks/344.js:1:152848)
+2026-02-22 18:34:52.07
+9a7555b2
+User
+status: 404
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at b7 (.next/server/chunks/344.js:1:157542)
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at async cm.generateContent (.next/server/chunks/344.js:1:181333)
+2026-02-22 18:34:52.07
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:34:52.07
+9a7555b2
+User
+at async h (.next/server/chunks/426.js:204:8)
+2026-02-22 18:36:11.92
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:36:11.92
+9a7555b2
+User
+status: 404
+2026-02-22 18:36:11.92
+9a7555b2
+User
+at async z (.next/server/app/api/ai/lesson-plan/route.js:1:2253)
+2026-02-22 18:36:11.92
+9a7555b2
+User
+at async k (.next/server/app/api/ai/lesson-plan/route.js:1:5568) {
+2026-02-22 18:36:11.92
+9a7555b2
+User
+}
+2026-02-22 18:36:11.92
+9a7555b2
+User
+at b7 (.next/server/chunks/344.js:1:157542)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at b7 (.next/server/chunks/344.js:1:157542)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at async (.next/server/chunks/344.js:1:152848)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at async h (.next/server/chunks/426.js:204:8)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at async k (.next/server/app/api/ai/lesson-plan/route.js:1:5568) {
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at async cm.generateContent (.next/server/chunks/344.js:1:181333)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+at async z (.next/server/app/api/ai/lesson-plan/route.js:1:2253)
+2026-02-22 18:36:13.13
+9a7555b2
+User
+}
+2026-02-22 18:36:13.13
+9a7555b2
+User
+status: 404
+2026-02-22 18:36:13.13
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:36:16.30
+9a7555b2
+User
+Lesson plan generation error: Error [ApiError]: {"error":{"code":404,"message":"models/gemini-3-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}
+2026-02-22 18:36:16.30
+9a7555b2
+User
+at async cm.generateContent (.next/server/chunks/344.js:1:181333)
+2026-02-22 18:36:16.30
+9a7555b2
+User
+at async (.next/server/chunks/344.js:1:152848)
+2026-02-22 18:36:16.30
+9a7555b2
+User
+at b7 (.next/server/chunks/344.js:1:157542)
+2026-02-22 18:36:16.30
+9a7555b2
+User
+at async z (.next/server/app/api/ai/lesson-plan/route.js:1:2253)
