@@ -496,7 +496,15 @@ export function LessonPlanner() {
     p: ({ children }) => <p className={getParagraphClass(getNodeText(children))}>{children}</p>,
     ul: ({ children }) => <ul className="lesson-ul">{children}</ul>,
     ol: ({ children }) => <ol className="lesson-ol">{children}</ol>,
-    li: ({ children }) => <li className={getListItemClass(getNodeText(children))}>{children}</li>,
+    li: ({ children }) => {
+      const text = getNodeText(children);
+      const cls = getListItemClass(text);
+      const lowerText = text.toLowerCase();
+      if (lowerText.includes('differentiation') || lowerText.includes('differentiated') || lowerText.startsWith('below grade') || lowerText.startsWith('above grade') || lowerText.startsWith('on grade') || lowerText.includes('ell ') || lowerText.includes('english learner')) {
+        return <li className={cls}><div className="lesson-differentiation-callout">{children}</div></li>;
+      }
+      return <li className={cls}>{children}</li>;
+    },
     strong: ({ children }) => <strong className="lesson-strong">{children}</strong>,
     blockquote: ({ children }) => <blockquote className="lesson-callout">{children}</blockquote>,
     img: ({ src, alt }) => <img src={src || ''} alt={alt || 'Lesson visual'} className="lesson-inline-image" />,

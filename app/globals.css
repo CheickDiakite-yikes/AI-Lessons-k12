@@ -173,9 +173,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .lesson-ol {
+  counter-reset: procedure-step;
+  list-style: none;
+  padding-left: 0;
   margin: 0.65rem 0 0.9rem;
-  padding-left: 1.4rem;
-  list-style-type: decimal;
 }
 
 .lesson-ul .lesson-ul {
@@ -195,6 +196,87 @@ h1, h2, h3, h4, h5, h6 {
 
 .lesson-li::marker {
   color: var(--color-sage-green);
+}
+
+/* Procedure step styling - numbered colored circles (not inside worksheets) */
+.lesson-markdown > .lesson-ol > .lesson-li,
+.lesson-markdown > * > .lesson-ol > .lesson-li {
+  counter-increment: procedure-step;
+  position: relative;
+  padding-left: 3rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
+  border-left: 2px solid #e5e0d8;
+  margin-left: 1rem;
+}
+
+.lesson-markdown > .lesson-ol > .lesson-li:last-child,
+.lesson-markdown > * > .lesson-ol > .lesson-li:last-child {
+  border-left-color: transparent;
+  padding-bottom: 0;
+}
+
+.lesson-markdown > .lesson-ol > .lesson-li::before,
+.lesson-markdown > * > .lesson-ol > .lesson-li::before {
+  content: counter(procedure-step);
+  position: absolute;
+  left: -0.85rem;
+  top: 0;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-deep-ink);
+  border: 2px solid var(--color-deep-ink);
+}
+
+.lesson-markdown > .lesson-ol > .lesson-li:nth-child(4n+1)::before,
+.lesson-markdown > * > .lesson-ol > .lesson-li:nth-child(4n+1)::before { background: #f6e8b1; }
+.lesson-markdown > .lesson-ol > .lesson-li:nth-child(4n+2)::before,
+.lesson-markdown > * > .lesson-ol > .lesson-li:nth-child(4n+2)::before { background: #c8dcc6; }
+.lesson-markdown > .lesson-ol > .lesson-li:nth-child(4n+3)::before,
+.lesson-markdown > * > .lesson-ol > .lesson-li:nth-child(4n+3)::before { background: #f0c6c6; }
+.lesson-markdown > .lesson-ol > .lesson-li:nth-child(4n+4)::before,
+.lesson-markdown > * > .lesson-ol > .lesson-li:nth-child(4n+4)::before { background: #b8d4e3; }
+
+/* Reset procedure styling inside worksheets */
+.worksheet-export-body .lesson-ol {
+  counter-reset: none;
+  list-style: decimal;
+  padding-left: 1.4rem;
+}
+
+.worksheet-export-body .lesson-ol > .lesson-li {
+  counter-increment: none;
+  position: static;
+  padding-left: 0.15rem;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-left: none;
+  margin-left: 0;
+}
+
+.worksheet-export-body .lesson-ol > .lesson-li::before {
+  content: none;
+}
+
+/* Differentiation callout boxes */
+.lesson-differentiation-callout {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 2px dashed #c4bfb6;
+  background: #faf8f5;
+  border-radius: 2px;
+}
+
+.lesson-differentiation-callout strong {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.9em;
 }
 
 .lesson-strong {
@@ -313,6 +395,10 @@ h1, h2, h3, h4, h5, h6 {
 
   .worksheet-meta-line {
     gap: 0.5rem;
+  }
+
+  .lesson-ol > .lesson-li {
+    padding-left: 2.5rem;
   }
 }
 
