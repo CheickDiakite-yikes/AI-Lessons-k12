@@ -88,11 +88,18 @@ drizzle.config.ts             - Drizzle Kit configuration
 - DB push: `npx drizzle-kit push`
 - Production: Uses standalone output mode
 
+## Authentication Flow
+- **Email/Password**: Users sign up with name, email, password, role, school, how-found-us. Passwords hashed with bcryptjs (12 rounds). Login via NextAuth Credentials provider.
+- **Google OAuth**: Users can also sign up/login via Google. If a Google user's email matches an existing email/password account, the accounts are linked.
+- JWT session strategy (stateless), cookie-based auth
+- API routes use `getAuthUser()` from `lib/auth-server.ts`
+- Signup API: `POST /api/auth/signup` creates user with hashed password
+
 ## Recent Changes
+- **Added email/password signup and login** alongside Google OAuth
+- **Database schema updated**: Added `password_hash` column, made `google_id` nullable, made `email` unique index
 - **Removed Firebase entirely** - No more Firebase Auth, Firestore, or Firebase Admin SDK
 - **Migrated to Google OAuth via NextAuth.js** - Direct Google sign-in without Firebase
-- **Database column renamed**: `firebase_uid` -> `google_id` in users table
-- **Simplified login/signup**: Google-only authentication (no email/password)
 - **Cookie-based API auth**: API routes use NextAuth session cookies instead of Bearer tokens
 - All data persistence handled by PostgreSQL via Drizzle ORM
 - Integrated Replit Object Storage for lesson images and profile pictures

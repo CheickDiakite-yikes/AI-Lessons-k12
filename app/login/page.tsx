@@ -3,28 +3,67 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { CustomLogo } from '@/components/CustomLogo';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Invalid email or password. Please try again.');
+      } else {
+        router.push('/');
+        router.refresh();
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setError('');
-    setLoading(true);
+    setGoogleLoading(true);
     try {
       await signIn('google', { callbackUrl: '/' });
     } catch (error) {
       console.error('Google login error:', error);
       setError('Authentication failed. Please try again.');
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
+
+  const inputClass = "w-full px-3 py-2.5 bg-white text-[var(--color-deep-ink)] border-2 border-[var(--color-deep-ink)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-sage-green)] focus:border-[var(--color-sage-green)] placeholder:text-gray-400";
 
   return (
     <div className="min-h-screen bg-[var(--color-crisp-page)] flex flex-col items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md bg-white border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] p-8">
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-6">
           <Link href="/" className="flex items-center gap-2 mb-4">
             <div className="w-12 h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
               <CustomLogo className="w-7 h-7 text-white" />
@@ -32,18 +71,62 @@ export default function LoginPage() {
             <span className="text-3xl font-serif font-black tracking-tight text-[var(--color-deep-ink)]">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-[var(--color-deep-ink)]">Welcome Back</h1>
-          <p className="text-sm text-[var(--color-charcoal-grey)] mt-2">Sign in with your Google account to continue</p>
+          <p className="text-sm text-[var(--color-charcoal-grey)] mt-2">Sign in to continue planning</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 font-medium">
+          <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 font-medium text-sm">
             {error}
           </div>
         )}
 
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-bold text-[var(--color-deep-ink)] mb-1">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@school.edu"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-bold text-[var(--color-deep-ink)] mb-1">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className={inputClass}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[var(--color-sage-green)] text-white px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
+
+        <div className="flex items-center my-5">
+          <div className="flex-grow border-t-2 border-gray-200"></div>
+          <span className="px-3 text-sm font-medium text-gray-400">or</span>
+          <div className="flex-grow border-t-2 border-gray-200"></div>
+        </div>
+
         <button
           onClick={handleGoogleLogin}
-          disabled={loading}
+          disabled={googleLoading}
           className="w-full flex items-center justify-center gap-2 bg-white text-[var(--color-deep-ink)] px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -52,7 +135,7 @@ export default function LoginPage() {
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
-          {loading ? 'Signing in...' : 'Continue with Google'}
+          {googleLoading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
         <p className="mt-6 text-center text-sm font-medium text-[var(--color-charcoal-grey)]">
