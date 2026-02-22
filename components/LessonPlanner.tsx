@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, isValidElement, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check, CheckCircle2, Circle, Loader2, FileDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check, CheckCircle2, Circle, Loader2, FileDown, AlertTriangle } from 'lucide-react';
 import Markdown, { type Components } from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
@@ -404,6 +404,8 @@ export function LessonPlanner() {
   const [slideImageKeys, setSlideImageKeys] = useState<(string | null)[]>([]);
   const [slidesGenerating, setSlidesGenerating] = useState(false);
   const [slidesProgress, setSlidesProgress] = useState({ current: 0, total: 0 });
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const phaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -538,6 +540,8 @@ export function LessonPlanner() {
     setSlideImageKeys([]);
     setSlidesGenerating(false);
     setGenerationPhase(0);
+    setGenerationError(null);
+    setSaveError(null);
     
     const steps = getGenerationSteps();
     let phaseIndex = 0;
@@ -589,9 +593,15 @@ export function LessonPlanner() {
       if (plan.imagePrompt) {
         setImagePrompt(plan.imagePrompt);
         setIsGeneratingImage(true);
-        image = await generateImage(plan.imagePrompt);
-        setGeneratedImage(image);
-        setIsGeneratingImage(false);
+        try {
+          image = await generateImage(plan.imagePrompt);
+          setGeneratedImage(image);
+        } catch (imgErr) {
+          console.error('Failed to generate hero image:', imgErr);
+          image = null;
+        } finally {
+          setIsGeneratingImage(false);
+        }
       }
 
       if (includeSlides && plan.slides && plan.slides.length > 0) {
@@ -605,9 +615,8 @@ export function LessonPlanner() {
 
         for (let i = 0; i < plan.slides.length; i++) {
           setSlidesProgress({ current: i + 1, total: plan.slides.length });
-          try {
-            const slide = plan.slides[i];
-            const slidePrompt = `Create a professional educational presentation slide for a ${gradeLevel} ${subject} classroom. This is slide ${i + 1} of ${plan.slides.length}.
+          const slide = plan.slides[i];
+          const slidePrompt = `Create a professional educational presentation slide for a ${gradeLevel} ${subject} classroom. This is slide ${i + 1} of ${plan.slides.length}.
 
 Title: "${slide.title}"
 Content bullets:
@@ -623,12 +632,21 @@ Design requirements:
 - Background should be clean and not distract from content
 - Use a cohesive color scheme suitable for classroom presentation
 - Text must be clearly readable at projection size`;
-            
-            const slideImg = await generateImage(slidePrompt);
-            slideImgs[i] = slideImg;
-            setSlideImages([...slideImgs]);
-          } catch (slideErr) {
-            console.error(`Failed to generate slide ${i + 1}:`, slideErr);
+
+          let slideGenerated = false;
+          for (let attempt = 0; attempt < 2 && !slideGenerated; attempt++) {
+            try {
+              const slideImg = await generateImage(slidePrompt);
+              slideImgs[i] = slideImg;
+              setSlideImages([...slideImgs]);
+              slideGenerated = true;
+            } catch (slideErr) {
+              if (attempt === 0) {
+                console.warn(`Slide ${i + 1} failed, retrying...`, slideErr);
+              } else {
+                console.error(`Failed to generate slide ${i + 1} after retry:`, slideErr);
+              }
+            }
           }
         }
 
@@ -669,8 +687,9 @@ Design requirements:
         });
         setCurrentPlanId(saved.id);
         setSavedPlans(prev => [saved, ...prev]);
-      } catch (saveError) {
-        console.error('Failed to save lesson plan:', saveError);
+      } catch (saveErr) {
+        console.error('Failed to save lesson plan:', saveErr);
+        setSaveError('Auto-save failed. You can manually save using the Save button in the toolbar.');
       }
 
       advancePhase();
@@ -679,7 +698,7 @@ Design requirements:
       if (phaseTimerRef.current) { clearInterval(phaseTimerRef.current); phaseTimerRef.current = null; }
       console.error("Failed to generate:", error);
       const message = error instanceof Error ? error.message : 'Failed to generate lesson plan. Please try again.';
-      alert(message);
+      setGenerationError(message);
     } finally {
       setIsGenerating(false);
     }
@@ -1802,6 +1821,15 @@ Design requirements:
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-none"
                   >
+                    {saveError && (
+                      <div className="mb-4 flex items-center gap-3 bg-amber-50 border-2 border-amber-400 p-3 shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                        <p className="text-sm font-sans text-[var(--color-deep-ink)] flex-1">{saveError}</p>
+                        <button onClick={() => setSaveError(null)} className="text-[var(--color-charcoal-grey)] hover:text-[var(--color-deep-ink)] p-1">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                     {/* Render Image if available */}
                     {(generatedImage || isGeneratingImage) && (
                       <div className="mb-8 border-2 border-[var(--color-deep-ink)] p-2 bg-white shadow-[4px_4px_0px_0px_var(--color-deep-ink)] transform -rotate-1 hover:rotate-0 transition-transform lesson-hero-frame">
@@ -1947,6 +1975,28 @@ Design requirements:
                       </div>
                     )}
                   </motion.div>
+                ) : generationError ? (
+                  <div className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center">
+                    <div className="bg-red-50 border-2 border-red-300 shadow-[4px_4px_0px_0px_var(--color-deep-ink)] p-6 md:p-8 max-w-md w-full">
+                      <AlertTriangle className="w-10 h-10 md:w-12 md:h-12 text-red-500 mx-auto mb-4" />
+                      <h3 className="text-lg md:text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-2">Generation Failed</h3>
+                      <p className="text-[var(--color-charcoal-grey)] font-sans text-sm md:text-base mb-6">{generationError}</p>
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={() => handleGenerate()}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-[var(--color-sage-green)] text-white font-bold border-2 border-[var(--color-deep-ink)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_var(--color-deep-ink)] transition-all"
+                        >
+                          <RefreshCw className="w-4 h-4" /> Try Again
+                        </button>
+                        <button
+                          onClick={() => setGenerationError(null)}
+                          className="px-5 py-2.5 bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] font-bold border-2 border-[var(--color-deep-ink)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_var(--color-deep-ink)] transition-all"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full py-20 md:py-32 text-center opacity-50">
                     <PenLine className="w-12 h-12 md:w-16 md:h-16 text-[var(--color-deep-ink)] mb-6" />
