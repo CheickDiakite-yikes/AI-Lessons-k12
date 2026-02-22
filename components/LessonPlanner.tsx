@@ -531,6 +531,10 @@ export function LessonPlanner() {
   };
 
   const handleGenerate = async () => {
+    if (!autoGenerate && !manualObjectives.trim()) {
+      setGenerationError('Please enter your learning objectives and topics, or turn on Auto-Generate Objectives.');
+      return;
+    }
     setIsGenerating(true);
     setIsInputPanelOpen(false);
     setGeneratedPlan(null);

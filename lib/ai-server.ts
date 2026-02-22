@@ -232,7 +232,7 @@ Context:
 - English Proficiency Levels: ${params.englishProficiency.length ? params.englishProficiency.join(', ') : 'Not specified'}
 - Academic Levels: ${params.academicLevels.length ? params.academicLevels.join(', ') : 'Not specified'}
 - Auto-Generate Objectives: ${params.autoGenerate ? 'Yes' : 'No'}
-${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectives/Topics: ${params.manualObjectives}` : ''}
+${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectives/Topics (IMPORTANT — you MUST base the entire lesson around these specific objectives and topics): ${params.manualObjectives}` : ''}
 - Include Worksheet Add-ons: ${includeWorksheets ? 'Yes' : 'No'}
 - Include Slide Add-ons: ${includeSlides ? 'Yes' : 'No'}
 ${isMultiDayPlan ? `- This is a multi-day unit. You must produce exactly ${lessonDayCount} daily lesson sections.` : '- This is a single-day lesson.'}
