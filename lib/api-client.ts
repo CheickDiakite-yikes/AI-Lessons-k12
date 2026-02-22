@@ -59,6 +59,7 @@ export const api = {
       gradeLevel?: string;
       subject?: string;
       duration?: string;
+      startDate?: string;
       classRosterId?: string;
       parameters?: any;
     }) => fetchApi('/api/lesson-plans', { method: 'POST', body: JSON.stringify(data) }),

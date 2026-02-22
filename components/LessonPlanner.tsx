@@ -9,6 +9,7 @@ import { generateLessonPlan, generateImage } from '@/lib/ai';
 import { useAuth } from '@/components/AuthProvider';
 import { api } from '@/lib/api-client';
 import { normalizeLessonMarkdown } from '@/lib/lesson-markdown';
+import LessonCalendar from '@/components/LessonCalendar';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
 const GRADE_LEVELS = ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade'];
@@ -325,6 +326,11 @@ export function LessonPlanner() {
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[2]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
   const [duration, setDuration] = useState('45');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
   const [englishProficiency, setEnglishProficiency] = useState<string[]>([]);
   const [academicLevels, setAcademicLevels] = useState<string[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(true);
@@ -655,6 +661,7 @@ Design requirements:
           gradeLevel,
           subject,
           duration,
+          startDate,
           classRosterId: selectedClassId || undefined,
           parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: persistedSlideImageKeys },
         });
@@ -795,6 +802,7 @@ Design requirements:
         gradeLevel,
         subject,
         duration,
+        startDate,
         classRosterId: selectedClassId || null,
         parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: slideImageKeys },
       });
@@ -1244,39 +1252,29 @@ Design requirements:
                   </div>
                 </div>
               ) : (
-                <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
-                      <Calendar className="w-6 h-6" /> Lesson Calendar
-                    </h2>
-                    <div className="flex gap-2">
-                      <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-sage-green)] text-white font-bold text-sm">Month</button>
-                      <button className="px-3 py-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">Week</button>
-                    </div>
-                  </div>
-
-                  {/* Mock Calendar Grid */}
-                  <div className="grid grid-cols-5 gap-2 md:gap-4">
-                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-                      <div key={day} className="text-center font-bold text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-2">{day}</div>
-                    ))}
-                    
-                    {/* Calendar Days */}
-                    {[...Array(20)].map((_, i) => {
-                      const hasLesson = i === 2 || i === 7 || i === 14;
-                      return (
-                        <div key={i} className={`aspect-square border-2 border-[var(--color-concrete-light)] p-1 md:p-2 relative ${hasLesson ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)]' : 'bg-[var(--color-whisper-white)]'}`}>
-                          <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">{i + 1}</span>
-                          {hasLesson && (
-                            <div className="absolute bottom-1 md:bottom-2 left-1 md:left-2 right-1 md:right-2 bg-[var(--color-sage-green)] text-white text-[10px] md:text-xs font-bold p-1 truncate border border-[var(--color-deep-ink)]">
-                              Science Unit
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <LessonCalendar
+                  savedPlans={savedPlans}
+                  onPlanClick={(planId, dayIndex) => {
+                    const plan = savedPlans.find((p: any) => p.id === planId);
+                    if (!plan) return;
+                    setGeneratedPlan(plan.content);
+                    setCurrentPlanId(plan.id);
+                    setImagePrompt(plan.imagePrompt || null);
+                    setLessonOverview(plan.lessonOverview || null);
+                    if (plan.imageKey) {
+                      api.fetchImageAsDataUrl(plan.imageKey).then(setGeneratedImage).catch(() => setGeneratedImage(null));
+                    } else {
+                      setGeneratedImage(null);
+                    }
+                    if (plan.planLength) setPlanLength(plan.planLength);
+                    if (plan.gradeLevel) setGradeLevel(plan.gradeLevel);
+                    if (plan.subject) setSubject(plan.subject);
+                    if (plan.duration) setDuration(plan.duration);
+                    if (plan.startDate) setStartDate(plan.startDate);
+                    setActiveDayIndex(dayIndex);
+                    setCurrentView('planner');
+                  }}
+                />
               )}
             </div>
 
@@ -1324,6 +1322,7 @@ Design requirements:
                           if (plan.gradeLevel) setGradeLevel(plan.gradeLevel);
                           if (plan.subject) setSubject(plan.subject);
                           if (plan.duration) setDuration(plan.duration);
+                          if (plan.startDate) setStartDate(plan.startDate);
                           if (plan.parameters && typeof plan.parameters === 'object') {
                             const params = plan.parameters as Record<string, unknown>;
                             if (params.includeSlides !== undefined) setIncludeSlides(Boolean(params.includeSlides));
@@ -1446,15 +1445,26 @@ Design requirements:
             />
           </div>
 
-          {/* Duration */}
-          <div className="space-y-2">
-            <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Lesson Duration (mins)</label>
-            <input 
-              type="number" 
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-            />
+          {/* Duration & Start Date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Duration (mins)</label>
+              <input 
+                type="number" 
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Start Date</label>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
+              />
+            </div>
           </div>
 
           {/* English Proficiency */}
