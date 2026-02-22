@@ -170,7 +170,7 @@ export function LessonPlanner() {
   const [manualObjectives, setManualObjectives] = useState('');
   const [includeWorksheets, setIncludeWorksheets] = useState(false);
   const [includeSlides, setIncludeSlides] = useState(false);
-  const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
+  const [isInputPanelOpen, setIsInputPanelOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'planner' | 'profile'>('planner');
   const [profilePic, setProfilePic] = useState<string | null>(null);
