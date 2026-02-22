@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CustomLogo } from '@/components/CustomLogo';
@@ -42,24 +41,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      const docRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        await setDoc(docRef, {
-          uid: user.uid,
-          email: user.email,
-          name: user.displayName || 'Google User',
-          role: 'teacher',
-          school: '',
-          howDidYouHear: 'Google',
-          createdAt: serverTimestamp(),
-        });
-      }
-
+      await signInWithPopup(auth, googleProvider);
       router.push('/');
     } catch (err: any) {
       console.error('Google login error:', err);

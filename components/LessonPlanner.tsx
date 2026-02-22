@@ -9,6 +9,7 @@ import { generateLessonPlan, generateImage } from '@/lib/ai';
 import { useAuth } from '@/components/AuthProvider';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { api } from '@/lib/api-client';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
 const GRADE_LEVELS = ['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'];
@@ -112,6 +113,7 @@ function CustomSelect({
 }
 
 export function LessonPlanner() {
+  const { user, profile } = useAuth();
   const [planLength, setPlanLength] = useState(PLAN_LENGTHS[0]);
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[5]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
@@ -127,19 +129,32 @@ export function LessonPlanner() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Class Management State
-  const [classes, setClasses] = useState<ClassRoster[]>([
-    { 
-      id: '1', 
-      name: '5th Grade Science (Period 1)', 
-      students: [
-        { id: 's1', name: 'Emma Thompson', englishProficiency: 'Expanding', readingLevel: 'Above Grade', mathLevel: 'At Grade', writingLevel: 'At Grade', academicLevel: 'At Grade', learningPreference: 'Visual' },
-        { id: 's2', name: 'Liam Garcia', englishProficiency: 'Developing', readingLevel: 'Below Grade', mathLevel: 'At Grade', writingLevel: 'Below Grade', academicLevel: 'Below Grade', learningPreference: 'Kinesthetic' },
-        { id: 's3', name: 'Noah Patel', englishProficiency: 'Bridging', readingLevel: 'At Grade', mathLevel: 'Above Grade', writingLevel: 'At Grade', academicLevel: 'At Grade', learningPreference: 'Auditory' }
-      ] 
-    },
-    { id: '2', name: '5th Grade Math (Period 2)', students: [] },
-    { id: '3', name: '6th Grade Science (Period 4)', students: [] }
-  ]);
+  const [classes, setClasses] = useState<ClassRoster[]>([]);
+
+  useEffect(() => {
+    const loadRosters = async () => {
+      try {
+        const rosters = await api.classRosters.list();
+        setClasses(rosters.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          students: (r.students || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            englishProficiency: s.englishProficiency,
+            readingLevel: s.readingLevel,
+            mathLevel: s.mathLevel,
+            writingLevel: s.writingLevel,
+            academicLevel: s.academicLevel,
+            learningPreference: s.learningPreference,
+          })),
+        })));
+      } catch (error) {
+        console.error('Failed to load rosters:', error);
+      }
+    };
+    loadRosters();
+  }, []);
   const [newClassName, setNewClassName] = useState('');
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
   const [editingClassName, setEditingClassName] = useState('');
@@ -199,12 +214,29 @@ export function LessonPlanner() {
       
       setGeneratedPlan(plan.text);
       
+      let image: string | null = null;
       if (plan.imagePrompt) {
         setImagePrompt(plan.imagePrompt);
         setIsGeneratingImage(true);
-        const image = await generateImage(plan.imagePrompt);
+        image = await generateImage(plan.imagePrompt);
         setGeneratedImage(image);
         setIsGeneratingImage(false);
+      }
+
+      try {
+        await api.lessonPlans.create({
+          content: plan.text,
+          imagePrompt: plan.imagePrompt || undefined,
+          imageBase64: image || undefined,
+          planLength,
+          gradeLevel,
+          subject,
+          duration,
+          classRosterId: selectedClassId || undefined,
+          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives },
+        });
+      } catch (saveError) {
+        console.error('Failed to save lesson plan:', saveError);
       }
       
     } catch (error) {
@@ -286,10 +318,15 @@ export function LessonPlanner() {
     }
   };
 
-  const handleAddClass = () => {
+  const handleAddClass = async () => {
     if (newClassName.trim() && !classes.find(c => c.name === newClassName.trim())) {
-      setClasses([...classes, { id: Date.now().toString(), name: newClassName.trim(), students: [] }]);
-      setNewClassName('');
+      try {
+        const created: any = await api.classRosters.create(newClassName.trim());
+        setClasses([...classes, { id: created.id, name: created.name, students: [] }]);
+        setNewClassName('');
+      } catch (error) {
+        console.error('Failed to create class:', error);
+      }
     }
   };
 
@@ -298,31 +335,40 @@ export function LessonPlanner() {
     setEditingClassName(cls.name);
   };
 
-  const handleSaveEditClass = () => {
+  const handleSaveEditClass = async () => {
     if (editingClassName.trim() && editingClassId) {
-      setClasses(classes.map(c => 
-        c.id === editingClassId ? { ...c, name: editingClassName.trim() } : c
-      ));
+      try {
+        await api.classRosters.update(editingClassId, editingClassName.trim());
+        setClasses(classes.map(c => 
+          c.id === editingClassId ? { ...c, name: editingClassName.trim() } : c
+        ));
+      } catch (error) {
+        console.error('Failed to rename class:', error);
+      }
     }
     setEditingClassId(null);
     setEditingClassName('');
   };
 
-  const handleDeleteClass = (classIdToDelete: string) => {
-    setClasses(classes.filter(c => c.id !== classIdToDelete));
-    if (selectedClassId === classIdToDelete) {
-      setSelectedClassId('');
-    }
-    if (selectedClassIdForRoster === classIdToDelete) {
-      setSelectedClassIdForRoster(null);
+  const handleDeleteClass = async (classIdToDelete: string) => {
+    try {
+      await api.classRosters.delete(classIdToDelete);
+      setClasses(classes.filter(c => c.id !== classIdToDelete));
+      if (selectedClassId === classIdToDelete) {
+        setSelectedClassId('');
+      }
+      if (selectedClassIdForRoster === classIdToDelete) {
+        setSelectedClassIdForRoster(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete class:', error);
     }
   };
 
-  const handleAddStudent = () => {
+  const handleAddStudent = async () => {
     if (!newStudent.name?.trim() || !selectedClassIdForRoster) return;
     
-    const student: Student = {
-      id: Date.now().toString(),
+    const studentData = {
       name: newStudent.name.trim(),
       englishProficiency: newStudent.englishProficiency || ENGLISH_PROFICIENCY[3],
       readingLevel: newStudent.readingLevel || 'At Grade',
@@ -332,31 +378,52 @@ export function LessonPlanner() {
       learningPreference: newStudent.learningPreference || 'Visual'
     };
 
-    setClasses(classes.map(c => {
-      if (c.id === selectedClassIdForRoster) {
-        return { ...c, students: [...c.students, student] };
-      }
-      return c;
-    }));
-    
-    setNewStudent({
-      englishProficiency: ENGLISH_PROFICIENCY[3],
-      readingLevel: 'At Grade',
-      mathLevel: 'At Grade',
-      writingLevel: 'At Grade',
-      academicLevel: 'At Grade',
-      learningPreference: 'Visual'
-    });
-    setIsAddingStudent(false);
+    try {
+      const created: any = await api.students.create(selectedClassIdForRoster, studentData);
+      const student: Student = {
+        id: created.id,
+        name: created.name,
+        englishProficiency: created.englishProficiency,
+        readingLevel: created.readingLevel,
+        mathLevel: created.mathLevel,
+        writingLevel: created.writingLevel,
+        academicLevel: created.academicLevel,
+        learningPreference: created.learningPreference,
+      };
+
+      setClasses(classes.map(c => {
+        if (c.id === selectedClassIdForRoster) {
+          return { ...c, students: [...c.students, student] };
+        }
+        return c;
+      }));
+      
+      setNewStudent({
+        englishProficiency: ENGLISH_PROFICIENCY[3],
+        readingLevel: 'At Grade',
+        mathLevel: 'At Grade',
+        writingLevel: 'At Grade',
+        academicLevel: 'At Grade',
+        learningPreference: 'Visual'
+      });
+      setIsAddingStudent(false);
+    } catch (error) {
+      console.error('Failed to add student:', error);
+    }
   };
 
-  const handleDeleteStudent = (classId: string, studentId: string) => {
-    setClasses(classes.map(c => {
-      if (c.id === classId) {
-        return { ...c, students: c.students.filter(s => s.id !== studentId) };
-      }
-      return c;
-    }));
+  const handleDeleteStudent = async (classId: string, studentId: string) => {
+    try {
+      await api.students.delete(classId, studentId);
+      setClasses(classes.map(c => {
+        if (c.id === classId) {
+          return { ...c, students: c.students.filter(s => s.id !== studentId) };
+        }
+        return c;
+      }));
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+    }
   };
 
   const handleSelectClassForRoster = (classId: string) => {

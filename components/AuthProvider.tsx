@@ -2,17 +2,18 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 
 interface UserProfile {
-  uid: string;
+  id: string;
+  firebaseUid: string;
   email: string;
   name: string;
   role: 'teacher' | 'admin' | 'student';
   school?: string;
   howDidYouHear?: string;
-  createdAt: any;
+  profileImageKey?: string;
+  createdAt: string;
 }
 
 interface AuthContextType {
@@ -20,6 +21,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   refreshProfile: () => Promise<void>;
+  dbUserId: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -27,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   refreshProfile: async () => {},
+  dbUserId: null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -34,18 +37,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (uid: string) => {
+  const syncProfile = async (firebaseUser: User) => {
     try {
-      const docRef = doc(db, 'users', uid);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        setProfile(docSnap.data() as UserProfile);
+      const token = await firebaseUser.getIdToken();
+      const response = await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: firebaseUser.displayName || 'User',
+          email: firebaseUser.email,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data);
       } else {
+        console.error('Failed to sync profile:', response.status);
         setProfile(null);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error syncing user profile:', error);
       setProfile(null);
     }
   };
@@ -53,13 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
-        await fetchProfile(currentUser.uid);
+        await syncProfile(currentUser);
       } else {
         setProfile(null);
       }
-      
+
       setLoading(false);
     });
 
@@ -67,12 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      loading, 
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      loading,
+      dbUserId: profile?.id || null,
       refreshProfile: async () => {
-        if (user) await fetchProfile(user.uid);
+        if (user) await syncProfile(user);
       }
     }}>
       {children}

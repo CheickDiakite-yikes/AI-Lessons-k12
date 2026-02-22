@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, googleProvider } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CustomLogo } from '@/components/CustomLogo';
@@ -42,14 +41,21 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
 
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        name: formData.name,
-        role: formData.role,
-        school: formData.school,
-        howDidYouHear: formData.howDidYouHear,
-        createdAt: serverTimestamp(),
+      await updateProfile(user, { displayName: formData.name });
+
+      const token = await user.getIdToken();
+      await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          role: formData.role,
+          school: formData.school,
+          howDidYouHear: formData.howDidYouHear,
+        }),
       });
 
       router.push('/');
@@ -65,30 +71,7 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      // Only set doc if it's a new user, but since we can't easily tell without fetching,
-      // we can do a setDoc with merge: true, or just set it. 
-      // Actually, we should check if the user exists first to not overwrite role/school.
-      // But for simplicity, we can set default values if they don't exist.
-      // Let's import getDoc to check.
-      const { getDoc } = await import('firebase/firestore');
-      const docRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        await setDoc(docRef, {
-          uid: user.uid,
-          email: user.email,
-          name: user.displayName || 'Google User',
-          role: 'teacher', // default role
-          school: '',
-          howDidYouHear: 'Google',
-          createdAt: serverTimestamp(),
-        });
-      }
-
+      await signInWithPopup(auth, googleProvider);
       router.push('/');
     } catch (err: any) {
       console.error('Google signup error:', err);
