@@ -1651,7 +1651,7 @@ Design requirements:
       {/* Right Panel - Output Area */}
       <div className="flex w-full lg:w-3/4 flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative app-output-panel">
         {/* Top Action Bar */}
-        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-10 app-top-action-bar no-print">
+        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-30 app-top-action-bar no-print relative">
           <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={() => setIsInputPanelOpen(true)}
@@ -1700,16 +1700,15 @@ Design requirements:
               <MoreVertical className="w-5 h-5" />
             </button>
 
-            {/* Mobile Dropdown Content */}
-            <AnimatePresence>
-              {isMobileMenuOpen && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-48 bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] flex flex-col z-50 md:hidden"
-                >
-                  <button onClick={handleSave} className="flex items-center gap-3 px-4 py-3 font-bold text-sm border-b-2 border-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] text-left">
+            {/* Mobile Dropdown Menu Overlay & Content */}
+            {isMobileMenuOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[9998] md:hidden"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <div className="fixed top-16 right-3 w-48 bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] flex flex-col z-[9999] md:hidden rounded-sm">
+                  <button onClick={() => { handleSave(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 font-bold text-sm border-b-2 border-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] text-left">
                     <Save className="w-4 h-4" /> Save Plan
                   </button>
                   <button onClick={() => { handleExportPDF(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 font-bold text-sm border-b-2 border-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] text-left">
@@ -1718,9 +1717,9 @@ Design requirements:
                   <button onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 font-bold text-sm hover:bg-[var(--color-soft-clay)] text-left">
                     <Share2 className="w-4 h-4" /> Share Link
                   </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
