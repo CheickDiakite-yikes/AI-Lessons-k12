@@ -21,7 +21,7 @@ const fira = Fira_Code({
   display: 'swap',
 });
 
-const siteUrl = process.env.NEXTAUTH_URL || 'https://lessoncraft.app';
+const siteUrl = process.env.NEXTAUTH_URL || 'https://Lessies.replit.app';
 const siteName = 'LessonCraft';
 const siteDescription = 'The AI-powered lesson planner that actually understands your classroom. Build highly differentiated, engaging K-12 lesson plans in seconds.';
 const siteTitle = 'LessonCraft – AI Lesson Planner for K-12 Teachers';

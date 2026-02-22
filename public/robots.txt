@@ -3,4 +3,4 @@ Allow: /
 Disallow: /api/
 Disallow: /_next/
 
-Sitemap: https://lessoncraft.app/sitemap.xml
+Sitemap: https://Lessies.replit.app/sitemap.xml
