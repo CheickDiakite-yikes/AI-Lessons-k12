@@ -50,8 +50,8 @@ externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "PORT=5000 HOSTNAME=0.0.0.0 node .next/standalone/server.js"]
-build = ["bash", "-c", "npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/"]
+run = ["bash", "-c", "cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/ && PORT=5000 HOSTNAME=0.0.0.0 node .next/standalone/server.js"]
+build = ["npm", "run", "build"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-042823b4-40f8-4c1f-859a-8e7689424cb3"
