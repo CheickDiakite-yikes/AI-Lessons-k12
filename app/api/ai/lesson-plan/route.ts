@@ -4,6 +4,7 @@ import { getAuthUser, unauthorizedResponse } from '@/lib/auth-server';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
+export const maxDuration = 120;
 
 export async function POST(request: NextRequest) {
   try {
