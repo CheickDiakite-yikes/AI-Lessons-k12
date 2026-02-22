@@ -57,6 +57,7 @@ export const lessonPlans = pgTable('lesson_plans', {
   imagePrompt: text('image_prompt'),
   lessonOverview: text('lesson_overview'),
   imageKey: text('image_key'),
+  startDate: varchar('start_date', { length: 10 }),
   parameters: jsonb('parameters'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
