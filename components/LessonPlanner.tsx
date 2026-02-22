@@ -7,8 +7,7 @@ import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
 import { useAuth } from '@/components/AuthProvider';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase';
 import { api } from '@/lib/api-client';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
@@ -181,6 +180,18 @@ export function LessonPlanner() {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
+
+  const handleSignOut = async () => {
+    try {
+      const [{ signOut }, auth] = await Promise.all([
+        import('firebase/auth'),
+        getFirebaseAuth(),
+      ]);
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -477,7 +488,7 @@ export function LessonPlanner() {
                   {profile?.name || user?.displayName || 'Teacher Profile'}
                 </h1>
                 <button 
-                  onClick={() => signOut(auth)}
+                  onClick={handleSignOut}
                   className="text-sm text-red-600 font-bold hover:underline self-start mt-1"
                 >
                   Log Out

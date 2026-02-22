@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import type { User } from 'firebase/auth';
+import { getFirebaseAuth, preloadFirebaseAuth } from '@/lib/firebase';
 
 interface UserProfile {
   id: string;
@@ -66,19 +66,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+    let isActive = true;
+    let unsubscribe: (() => void) | null = null;
 
-      if (currentUser) {
-        await syncProfile(currentUser);
-      } else {
-        setProfile(null);
+    const bindAuthListener = async () => {
+      try {
+        await preloadFirebaseAuth();
+        const [{ onAuthStateChanged }, auth] = await Promise.all([
+          import('firebase/auth'),
+          getFirebaseAuth(),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (!isActive) {
+            return;
+          }
+
+          setUser(currentUser);
+          setLoading(false);
+
+          if (currentUser) {
+            // Keep the app interactive while profile sync runs in the background.
+            void syncProfile(currentUser);
+          } else {
+            setProfile(null);
+          }
+        });
+      } catch (error) {
+        console.error('Failed to initialize auth state listener:', error);
+        if (isActive) {
+          setLoading(false);
+          setProfile(null);
+          setUser(null);
+        }
       }
+    };
 
-      setLoading(false);
-    });
+    void bindAuthListener();
 
-    return () => unsubscribe();
+    return () => {
+      isActive = false;
+      unsubscribe?.();
+    };
   }, []);
 
   return (

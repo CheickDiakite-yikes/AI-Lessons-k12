@@ -1,29 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { ApiKeyGate } from '@/components/ApiKeyGate';
 import { LessonPlanner } from '@/components/LessonPlanner';
 import { LandingPage } from '@/components/LandingPage';
-import { useAuth } from '@/components/AuthProvider';
+import { AuthProvider, useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 
-export default function Home() {
+function HomeContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [showApp, setShowApp] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setShowApp(true);
-    } else {
-      setShowApp(false);
-    }
-  }, [user]);
 
   const handleLaunch = () => {
-    if (user) {
-      setShowApp(true);
-    } else {
+    if (!user) {
       router.push('/signup');
     }
   };
@@ -36,7 +24,7 @@ export default function Home() {
     );
   }
 
-  if (!showApp) {
+  if (!user) {
     return <LandingPage onLaunch={handleLaunch} />;
   }
 
@@ -44,5 +32,13 @@ export default function Home() {
     <ApiKeyGate>
       <LessonPlanner />
     </ApiKeyGate>
+  );
+}
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <HomeContent />
+    </AuthProvider>
   );
 }

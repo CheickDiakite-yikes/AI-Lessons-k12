@@ -1,10 +1,10 @@
-import { PublicNav } from '@/components/PublicNav';
+import { PublicNavStatic } from '@/components/PublicNavStatic';
 import { PublicFooter } from '@/components/PublicFooter';
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] flex flex-col">
-      <PublicNav />
+      <PublicNavStatic />
       <main className="flex-1 md:py-24 md:px-6 max-w-4xl mx-auto w-full">
         <div className="bg-[var(--color-crisp-page)] border-b-4 md:border-4 border-[var(--color-deep-ink)] p-6 md:p-12 md:shadow-[8px_8px_0px_0px_var(--color-deep-ink)]">
           <h1 className="text-5xl font-serif font-black mb-8 uppercase">Privacy Policy</h1>

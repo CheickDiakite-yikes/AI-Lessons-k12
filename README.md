@@ -73,7 +73,9 @@ This project uses Firebase Authentication. To enable it:
 1. Go to your Firebase Console.
 2. Navigate to **Authentication** > **Sign-in method**.
 3. Enable **Email/Password** and **Google** providers.
-4. Ensure your Firestore rules are deployed using the provided `firestore.rules` file.
+4. Navigate to **Authentication** > **Settings** > **Authorized domains** and add every hostname you use for development and production.
+5. If you are developing on Replit, add your current `*.replit.dev` host (exact hostname, no wildcard support).
+6. Ensure your Firestore rules are deployed using the provided `firestore.rules` file.
 
 ## Security Rules
 

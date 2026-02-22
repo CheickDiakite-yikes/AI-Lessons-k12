@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, ArrowRight, BookOpen, Users, Printer, Star, ChevronDown, CheckCircle2, User } from 'lucide-react';
+import { Sparkles, ArrowRight, Users, Printer, Star, ChevronDown, CheckCircle2, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { PublicNav } from './PublicNav';
 import { PublicFooter } from './PublicFooter';
 
 export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Prime key auth routes for near-instant transitions from the landing page.
+    router.prefetch('/login');
+    router.prefetch('/signup');
+  }, [router]);
 
   const faqs = [
     {

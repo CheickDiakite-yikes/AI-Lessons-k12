@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Crimson_Text, Fira_Code } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/components/AuthProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,9 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${crimson.variable} ${fira.variable}`}>
       <body suppressHydrationWarning className="antialiased selection:bg-[var(--color-sage-green)] selection:text-white">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {children}
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
-import { auth } from '@/lib/firebase';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 async function getAuthHeaders(): Promise<HeadersInit> {
+  const auth = await getFirebaseAuth();
   const user = auth.currentUser;
   if (!user) throw new Error('Not authenticated');
   const token = await user.getIdToken();
@@ -73,6 +74,7 @@ export const api = {
   getImageUrl: (imageKey: string) => `/api/images/${encodeURIComponent(imageKey)}`,
 
   fetchImageAsDataUrl: async (imageKey: string): Promise<string> => {
+    const auth = await getFirebaseAuth();
     const user = auth.currentUser;
     if (!user) throw new Error('Not authenticated');
     const token = await user.getIdToken();

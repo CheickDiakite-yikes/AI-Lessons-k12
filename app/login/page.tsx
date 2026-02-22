@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
+import { getFirebaseAuth, getGoogleProvider, preloadFirebaseAuth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CustomLogo } from '@/components/CustomLogo';
-import { motion } from 'motion/react';
+
+function getFriendlyAuthError(error: unknown): string {
+  const firebaseError = error as { code?: string; message?: string };
+  if (firebaseError?.code === 'auth/unauthorized-domain') {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+    return `Google sign-in is blocked for ${host}. Add it in Firebase Console -> Authentication -> Settings -> Authorized domains.`;
+  }
+  return firebaseError?.message || 'Authentication failed';
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,11 +34,15 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
+      const [{ signInWithEmailAndPassword }, auth] = await Promise.all([
+        import('firebase/auth'),
+        getFirebaseAuth(),
+      ]);
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
       router.push('/');
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Failed to log in');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(getFriendlyAuthError(error));
     } finally {
       setLoading(false);
     }
@@ -41,23 +52,32 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const [{ signInWithPopup }, auth, provider] = await Promise.all([
+        import('firebase/auth'),
+        getFirebaseAuth(),
+        getGoogleProvider(),
+      ]);
+      await signInWithPopup(auth, provider);
       router.push('/');
-    } catch (err: any) {
-      console.error('Google login error:', err);
-      setError(err.message || 'Failed to log in with Google');
+    } catch (error) {
+      console.error('Google login error:', error);
+      setError(getFriendlyAuthError(error));
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    void preloadFirebaseAuth();
+  }, []);
+
+  const primeAuthSdk = () => {
+    void preloadFirebaseAuth();
+  };
+
   return (
     <div className="min-h-screen bg-[var(--color-crisp-page)] flex flex-col items-center justify-center p-4 font-sans">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] p-8"
-      >
+      <div className="w-full max-w-md bg-white border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] p-8">
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2 mb-4">
             <div className="w-12 h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
@@ -76,6 +96,8 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
+          onMouseEnter={primeAuthSdk}
+          onFocus={primeAuthSdk}
           disabled={loading}
           className="w-full mb-6 flex items-center justify-center gap-2 bg-white text-[var(--color-deep-ink)] px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -131,12 +153,12 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-center text-sm font-medium text-[var(--color-charcoal-grey)]">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-[var(--color-deep-ink)] font-bold hover:underline">
             Sign up
           </Link>
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }

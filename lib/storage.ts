@@ -28,7 +28,8 @@ export async function downloadImage(key: string): Promise<Buffer> {
   if (!result.ok) {
     throw new Error(`Failed to download image: ${result.error}`);
   }
-  return result.value as Buffer;
+  const [bytes] = result.value;
+  return bytes;
 }
 
 export async function deleteImage(key: string): Promise<void> {

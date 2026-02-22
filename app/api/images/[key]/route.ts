@@ -32,8 +32,9 @@ export async function GET(
     }
 
     const buffer = await downloadImage(decodedKey);
+    const body = new Uint8Array(buffer);
 
-    return new Response(buffer, {
+    return new Response(body, {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'private, max-age=3600',
