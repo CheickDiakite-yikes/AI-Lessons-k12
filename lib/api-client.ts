@@ -1,19 +1,9 @@
-import { getFirebaseAuth } from '@/lib/firebase';
-
-async function getAuthHeaders(): Promise<HeadersInit> {
-  const auth = await getFirebaseAuth();
-  const user = auth.currentUser;
-  if (!user) throw new Error('Not authenticated');
-  const token = await user.getIdToken();
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-}
-
 async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const headers = await getAuthHeaders();
-  const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  const response = await fetch(url, { ...options, headers });
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || `HTTP ${response.status}`);
@@ -23,8 +13,6 @@ async function fetchApi<T>(url: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   users: {
-    sync: (data: { name: string; role?: string; school?: string; howDidYouHear?: string }) =>
-      fetchApi('/api/users/sync', { method: 'POST', body: JSON.stringify(data) }),
     get: () => fetchApi('/api/users/sync'),
   },
 
@@ -74,13 +62,7 @@ export const api = {
   getImageUrl: (imageKey: string) => `/api/images/${encodeURIComponent(imageKey)}`,
 
   fetchImageAsDataUrl: async (imageKey: string): Promise<string> => {
-    const auth = await getFirebaseAuth();
-    const user = auth.currentUser;
-    if (!user) throw new Error('Not authenticated');
-    const token = await user.getIdToken();
-    const response = await fetch(`/api/images/${encodeURIComponent(imageKey)}`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
+    const response = await fetch(`/api/images/${encodeURIComponent(imageKey)}`);
     if (!response.ok) throw new Error('Failed to fetch image');
     const blob = await response.blob();
     return URL.createObjectURL(blob);

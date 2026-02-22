@@ -5,32 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CustomLogo } from './CustomLogo';
 import { useAuth } from '@/components/AuthProvider';
-import { getFirebaseAuth, preloadFirebaseAuth } from '@/lib/firebase';
 
 export function PublicNav({ onLaunch }: { onLaunch?: () => void }) {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     router.prefetch('/login');
     router.prefetch('/signup');
   }, [router]);
-
-  const primeAuthSdk = () => {
-    void preloadFirebaseAuth();
-  };
-
-  const handleLogout = async () => {
-    try {
-      const [{ signOut }, auth] = await Promise.all([
-        import('firebase/auth'),
-        getFirebaseAuth(),
-      ]);
-      await signOut(auth);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   return (
     <nav className="p-6 border-b-4 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex justify-between items-center sticky top-0 z-50">
@@ -62,7 +45,7 @@ export function PublicNav({ onLaunch }: { onLaunch?: () => void }) {
                   </Link>
                 )}
                 <button
-                  onClick={handleLogout}
+                  onClick={() => signOut()}
                   className="bg-[var(--color-deep-ink)] text-white px-6 py-2 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-sage-green)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-sage-green)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
                   Log Out
@@ -73,8 +56,6 @@ export function PublicNav({ onLaunch }: { onLaunch?: () => void }) {
                 <Link
                   href="/login"
                   prefetch={true}
-                  onMouseEnter={primeAuthSdk}
-                  onFocus={primeAuthSdk}
                   className="text-[var(--color-deep-ink)] font-bold hover:underline"
                 >
                   Log In
@@ -82,8 +63,6 @@ export function PublicNav({ onLaunch }: { onLaunch?: () => void }) {
                 <Link
                   href="/signup"
                   prefetch={true}
-                  onMouseEnter={primeAuthSdk}
-                  onFocus={primeAuthSdk}
                   className="bg-[var(--color-sage-green)] text-white px-6 py-2 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none inline-block"
                 >
                   Sign Up

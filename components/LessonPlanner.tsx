@@ -7,7 +7,6 @@ import Markdown from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
 import { useAuth } from '@/components/AuthProvider';
-import { getFirebaseAuth } from '@/lib/firebase';
 import { api } from '@/lib/api-client';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
@@ -112,7 +111,7 @@ function CustomSelect({
 }
 
 export function LessonPlanner() {
-  const { user, profile } = useAuth();
+  const { user, signOut: handleSignOut } = useAuth();
   const [planLength, setPlanLength] = useState(PLAN_LENGTHS[0]);
   const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[5]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
@@ -180,18 +179,6 @@ export function LessonPlanner() {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
-
-  const handleSignOut = async () => {
-    try {
-      const [{ signOut }, auth] = await Promise.all([
-        import('firebase/auth'),
-        getFirebaseAuth(),
-      ]);
-      await signOut(auth);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -466,8 +453,8 @@ export function LessonPlanner() {
                 >
                   {profilePic ? (
                     <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                  ) : user?.photoURL ? (
-                    <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                  ) : user?.image ? (
+                    <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-8 h-8 text-[var(--color-deep-ink)]" />
                   )}
@@ -485,7 +472,7 @@ export function LessonPlanner() {
               </div>
               <div className="flex flex-col">
                 <h1 className="text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
-                  {profile?.name || user?.displayName || 'Teacher Profile'}
+                  {user?.name || 'Teacher Profile'}
                 </h1>
                 <button 
                   onClick={handleSignOut}
@@ -1022,8 +1009,8 @@ export function LessonPlanner() {
             >
               {profilePic ? (
                 <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-              ) : user?.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+              ) : user?.image ? (
+                <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-5 h-5 text-[var(--color-deep-ink)]" />
               )}

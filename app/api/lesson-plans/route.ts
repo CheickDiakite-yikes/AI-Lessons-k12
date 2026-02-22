@@ -1,27 +1,17 @@
 import { NextRequest } from 'next/server';
-import { db, users, lessonPlans } from '@/lib/db';
-import { verifyFirebaseToken, unauthorizedResponse } from '@/lib/auth-server';
-import { eq, desc } from 'drizzle-orm';
+import { db, lessonPlans } from '@/lib/db';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth-server';
+import { desc } from 'drizzle-orm';
 import { uploadImage, generateImageKey } from '@/lib/storage';
-
-async function getUserId(firebaseUid: string): Promise<string | null> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.firebaseUid, firebaseUid),
-    columns: { id: true },
-  });
-  return user?.id || null;
-}
+import { eq } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
-  const decoded = await verifyFirebaseToken(request);
-  if (!decoded) return unauthorizedResponse();
+  const authUser = await getAuthUser();
+  if (!authUser) return unauthorizedResponse();
 
   try {
-    const userId = await getUserId(decoded.uid);
-    if (!userId) return Response.json({ error: 'User not found' }, { status: 404 });
-
     const plans = await db.query.lessonPlans.findMany({
-      where: eq(lessonPlans.userId, userId),
+      where: eq(lessonPlans.userId, authUser.id),
       orderBy: [desc(lessonPlans.createdAt)],
     });
 
@@ -33,13 +23,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const decoded = await verifyFirebaseToken(request);
-  if (!decoded) return unauthorizedResponse();
+  const authUser = await getAuthUser();
+  if (!authUser) return unauthorizedResponse();
 
   try {
-    const userId = await getUserId(decoded.uid);
-    if (!userId) return Response.json({ error: 'User not found' }, { status: 404 });
-
     const body = await request.json();
     const { title, content, imagePrompt, imageBase64, planLength, gradeLevel, subject, duration, classRosterId, parameters } = body;
 
@@ -51,14 +38,14 @@ export async function POST(request: NextRequest) {
     if (imageBase64) {
       const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
-      imageKey = generateImageKey('lesson', userId);
+      imageKey = generateImageKey('lesson', authUser.id);
       await uploadImage(imageKey, buffer);
     }
 
     const inserted = await db
       .insert(lessonPlans)
       .values({
-        userId,
+        userId: authUser.id,
         classRosterId: classRosterId || null,
         title: title || extractTitle(content),
         planLength,

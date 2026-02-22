@@ -1,17 +1,11 @@
 import { NextRequest } from 'next/server';
-import { db, users, classRosters, students } from '@/lib/db';
-import { verifyFirebaseToken, unauthorizedResponse } from '@/lib/auth-server';
+import { db, classRosters, students } from '@/lib/db';
+import { getAuthUser, unauthorizedResponse } from '@/lib/auth-server';
 import { eq, and } from 'drizzle-orm';
 
-async function verifyRosterOwnership(firebaseUid: string, rosterId: string): Promise<boolean> {
-  const user = await db.query.users.findFirst({
-    where: eq(users.firebaseUid, firebaseUid),
-    columns: { id: true },
-  });
-  if (!user) return false;
-
+async function verifyRosterOwnership(userId: string, rosterId: string): Promise<boolean> {
   const roster = await db.query.classRosters.findFirst({
-    where: and(eq(classRosters.id, rosterId), eq(classRosters.userId, user.id)),
+    where: and(eq(classRosters.id, rosterId), eq(classRosters.userId, userId)),
   });
   return !!roster;
 }
@@ -20,12 +14,12 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const decoded = await verifyFirebaseToken(request);
-  if (!decoded) return unauthorizedResponse();
+  const authUser = await getAuthUser();
+  if (!authUser) return unauthorizedResponse();
 
   try {
     const { id: rosterId } = await params;
-    const isOwner = await verifyRosterOwnership(decoded.uid, rosterId);
+    const isOwner = await verifyRosterOwnership(authUser.id, rosterId);
     if (!isOwner) return Response.json({ error: 'Roster not found' }, { status: 404 });
 
     const body = await request.json();
@@ -60,12 +54,12 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const decoded = await verifyFirebaseToken(request);
-  if (!decoded) return unauthorizedResponse();
+  const authUser = await getAuthUser();
+  if (!authUser) return unauthorizedResponse();
 
   try {
     const { id: rosterId } = await params;
-    const isOwner = await verifyRosterOwnership(decoded.uid, rosterId);
+    const isOwner = await verifyRosterOwnership(authUser.id, rosterId);
     if (!isOwner) return Response.json({ error: 'Roster not found' }, { status: 404 });
 
     const body = await request.json();
@@ -96,12 +90,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const decoded = await verifyFirebaseToken(request);
-  if (!decoded) return unauthorizedResponse();
+  const authUser = await getAuthUser();
+  if (!authUser) return unauthorizedResponse();
 
   try {
     const { id: rosterId } = await params;
-    const isOwner = await verifyRosterOwnership(decoded.uid, rosterId);
+    const isOwner = await verifyRosterOwnership(authUser.id, rosterId);
     if (!isOwner) return Response.json({ error: 'Roster not found' }, { status: 404 });
 
     const url = new URL(request.url);

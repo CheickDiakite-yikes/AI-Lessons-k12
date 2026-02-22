@@ -1,34 +1,16 @@
-import { initializeApp, getApps, cert, type ServiceAccount } from 'firebase-admin/app';
-import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
-import { NextRequest } from 'next/server';
-import firebaseConfig from '../firebase-applet-config.json';
+import { auth } from '@/lib/auth';
+import { db, users } from '@/lib/db';
+import { eq } from 'drizzle-orm';
 
-if (!getApps().length) {
-  initializeApp({
-    projectId: firebaseConfig.projectId,
+export async function getAuthUser() {
+  const session = await auth();
+  if (!session?.user?.dbId) return null;
+
+  const dbUser = await db.query.users.findFirst({
+    where: eq(users.id, session.user.dbId),
   });
-}
 
-const adminAuth = getAuth();
-
-export async function verifyFirebaseToken(request: NextRequest): Promise<DecodedIdToken | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.split('Bearer ')[1];
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const decoded = await adminAuth.verifyIdToken(token);
-    return decoded;
-  } catch (error) {
-    console.error('Firebase token verification failed:', error);
-    return null;
-  }
+  return dbUser || null;
 }
 
 export function unauthorizedResponse() {

@@ -1,78 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getFirebaseAuth, getGoogleProvider, preloadFirebaseAuth } from '@/lib/firebase';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { CustomLogo } from '@/components/CustomLogo';
 
-function getFriendlyAuthError(error: unknown): string {
-  const firebaseError = error as { code?: string; message?: string };
-  if (firebaseError?.code === 'auth/unauthorized-domain') {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
-    return `Google sign-in is blocked for ${host}. Add it in Firebase Console -> Authentication -> Settings -> Authorized domains.`;
-  }
-  return firebaseError?.message || 'Authentication failed';
-}
-
 export default function LoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const [{ signInWithEmailAndPassword }, auth] = await Promise.all([
-        import('firebase/auth'),
-        getFirebaseAuth(),
-      ]);
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      router.push('/');
-    } catch (error) {
-      console.error('Login error:', error);
-      setError(getFriendlyAuthError(error));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
     try {
-      const [{ signInWithPopup }, auth, provider] = await Promise.all([
-        import('firebase/auth'),
-        getFirebaseAuth(),
-        getGoogleProvider(),
-      ]);
-      await signInWithPopup(auth, provider);
-      router.push('/');
+      await signIn('google', { callbackUrl: '/' });
     } catch (error) {
       console.error('Google login error:', error);
-      setError(getFriendlyAuthError(error));
-    } finally {
+      setError('Authentication failed. Please try again.');
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    void preloadFirebaseAuth();
-  }, []);
-
-  const primeAuthSdk = () => {
-    void preloadFirebaseAuth();
   };
 
   return (
@@ -86,6 +32,7 @@ export default function LoginPage() {
             <span className="text-3xl font-serif font-black tracking-tight text-[var(--color-deep-ink)]">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-[var(--color-deep-ink)]">Welcome Back</h1>
+          <p className="text-sm text-[var(--color-charcoal-grey)] mt-2">Sign in with your Google account to continue</p>
         </div>
 
         {error && (
@@ -96,10 +43,8 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogleLogin}
-          onMouseEnter={primeAuthSdk}
-          onFocus={primeAuthSdk}
           disabled={loading}
-          className="w-full mb-6 flex items-center justify-center gap-2 bg-white text-[var(--color-deep-ink)] px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 bg-white text-[var(--color-deep-ink)] px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -107,50 +52,8 @@ export default function LoginPage() {
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
-          Log in with Google
+          {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
-
-        <div className="relative flex items-center py-2 mb-6">
-          <div className="flex-grow border-t-2 border-[var(--color-deep-ink)]"></div>
-          <span className="flex-shrink-0 mx-4 text-[var(--color-charcoal-grey)] font-bold text-sm uppercase">Or log in with email</span>
-          <div className="flex-grow border-t-2 border-[var(--color-deep-ink)]"></div>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-[var(--color-deep-ink)] mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-[var(--color-deep-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-sage-green)] bg-[var(--color-crisp-page)]"
-              placeholder="jane@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-[var(--color-deep-ink)] mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full p-3 border-2 border-[var(--color-deep-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-sage-green)] bg-[var(--color-crisp-page)]"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[var(--color-sage-green)] text-white px-4 py-3 font-bold border-2 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-          >
-            {loading ? 'Logging in...' : 'Log In'}
-          </button>
-        </form>
 
         <p className="mt-6 text-center text-sm font-medium text-[var(--color-charcoal-grey)]">
           Don&apos;t have an account?{' '}
