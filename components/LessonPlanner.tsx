@@ -373,6 +373,8 @@ export function LessonPlanner() {
   const [newClassName, setNewClassName] = useState('');
   const [editingClassId, setEditingClassId] = useState<string | null>(null);
   const [editingClassName, setEditingClassName] = useState('');
+  const [editingDatePlanId, setEditingDatePlanId] = useState<string | null>(null);
+  const [editingDateValue, setEditingDateValue] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedClassIdForRoster, setSelectedClassIdForRoster] = useState<string | null>(null);
   const [isClassListExpanded, setIsClassListExpanded] = useState(false);
@@ -1332,14 +1334,59 @@ Design requirements:
                           setIsInputPanelOpen(false);
                         }}
                       >
-                        <div className="flex flex-col overflow-hidden mr-2">
+                        <div className="flex flex-col overflow-hidden mr-2 flex-1">
                           <span className="font-bold text-sm truncate">{plan.title || 'Untitled Plan'}</span>
                           <span className="text-xs text-[var(--color-charcoal-grey)]">
                             {plan.subject && plan.gradeLevel ? `${plan.subject} · ${plan.gradeLevel}` : ''}
                             {plan.planLength ? ` · ${plan.planLength}` : ''}
                           </span>
+                          {editingDatePlanId === plan.id ? (
+                            <div className="flex items-center gap-1 mt-1" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="date"
+                                value={editingDateValue}
+                                onChange={(e) => setEditingDateValue(e.target.value)}
+                                className="text-xs border border-[var(--color-deep-ink)] bg-white px-1 py-0.5 font-mono"
+                                autoFocus
+                              />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (editingDateValue) {
+                                    api.lessonPlans.update(plan.id, { startDate: editingDateValue }).then(() => {
+                                      setSavedPlans(prev => prev.map(p => p.id === plan.id ? { ...p, startDate: editingDateValue } : p));
+                                      setEditingDatePlanId(null);
+                                    }).catch(err => console.error('Failed to update start date:', err));
+                                  }
+                                }}
+                                className="text-xs px-1.5 py-0.5 bg-[var(--color-sage-green)] text-white border border-[var(--color-deep-ink)] font-bold hover:brightness-110"
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setEditingDatePlanId(null); }}
+                                className="text-xs px-1.5 py-0.5 bg-[var(--color-whisper-white)] border border-[var(--color-deep-ink)] font-bold hover:bg-[var(--color-soft-clay)]"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingDatePlanId(plan.id);
+                                setEditingDateValue(plan.startDate || new Date().toISOString().split('T')[0]);
+                              }}
+                              className={`text-[10px] mt-1 flex items-center gap-1 font-mono ${plan.startDate ? 'text-[var(--color-sage-green)]' : 'text-[var(--color-charcoal-grey)] italic'} hover:underline`}
+                            >
+                              <Calendar className="w-3 h-3" />
+                              {plan.startDate
+                                ? new Date(plan.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                                : 'Set start date'}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">
                             {new Date(plan.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
