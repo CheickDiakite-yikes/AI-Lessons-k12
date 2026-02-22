@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, content, imagePrompt, lessonOverview, imageBase64, planLength, gradeLevel, subject, duration, classRosterId, parameters } = body;
+    const { title, content, imagePrompt, lessonOverview, imageBase64, planLength, gradeLevel, subject, duration, classRosterId, startDate, parameters } = body;
 
     if (!content) {
       return Response.json({ error: 'Content is required' }, { status: 400 });
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         imagePrompt: imagePrompt || null,
         lessonOverview: lessonOverview || null,
         imageKey,
+        startDate: startDate || null,
         parameters: parameters || null,
       })
       .returning();

@@ -62,6 +62,7 @@ export async function PUT(
     if (body.subject !== undefined) allowedFields.subject = body.subject;
     if (body.duration !== undefined) allowedFields.duration = body.duration;
     if (body.imagePrompt !== undefined) allowedFields.imagePrompt = body.imagePrompt;
+    if (body.startDate !== undefined) allowedFields.startDate = body.startDate;
     if (body.parameters !== undefined) allowedFields.parameters = body.parameters;
     if (body.classRosterId !== undefined) allowedFields.classRosterId = body.classRosterId;
     allowedFields.updatedAt = new Date();
