@@ -79,7 +79,7 @@ drizzle.config.ts             - Drizzle Kit configuration
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret (secret)
 - `NEXTAUTH_SECRET` - NextAuth.js session encryption key
 - `NEXTAUTH_URL` - App URL for NextAuth callbacks
-- `NEXT_PUBLIC_GEMINI_API_KEY` - Required for Gemini AI API calls
+- `GEMINI_API_KEY` - Required for Gemini AI API calls (server-side)
 - `PORT` / `HOSTNAME` - Production server config
 
 ## Development

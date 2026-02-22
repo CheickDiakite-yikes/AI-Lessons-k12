@@ -39,9 +39,21 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    const allowedFields: Record<string, any> = {};
+    if (body.title !== undefined) allowedFields.title = body.title;
+    if (body.content !== undefined) allowedFields.content = body.content;
+    if (body.planLength !== undefined) allowedFields.planLength = body.planLength;
+    if (body.gradeLevel !== undefined) allowedFields.gradeLevel = body.gradeLevel;
+    if (body.subject !== undefined) allowedFields.subject = body.subject;
+    if (body.duration !== undefined) allowedFields.duration = body.duration;
+    if (body.imagePrompt !== undefined) allowedFields.imagePrompt = body.imagePrompt;
+    if (body.parameters !== undefined) allowedFields.parameters = body.parameters;
+    if (body.classRosterId !== undefined) allowedFields.classRosterId = body.classRosterId;
+    allowedFields.updatedAt = new Date();
+
     const updated = await db
       .update(lessonPlans)
-      .set({ ...body, updatedAt: new Date() })
+      .set(allowedFields)
       .where(and(eq(lessonPlans.id, id), eq(lessonPlans.userId, authUser.id)))
       .returning();
 

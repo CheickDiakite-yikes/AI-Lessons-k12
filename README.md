@@ -35,7 +35,7 @@ A beautifully designed K-12 lesson planner for teachers, powered by AI. LessonCr
 Create a `.env.local` file in the root directory and add the following variables:
 
 ```env
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
 Make sure your `firebase-applet-config.json` is properly configured with your Firebase project details.

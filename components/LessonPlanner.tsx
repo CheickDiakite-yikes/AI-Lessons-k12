@@ -10,8 +10,8 @@ import { useAuth } from '@/components/AuthProvider';
 import { api } from '@/lib/api-client';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
-const GRADE_LEVELS = ['Kindergarten', '1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade', '7th Grade', '8th Grade', '9th Grade', '10th Grade', '11th Grade', '12th Grade'];
-const SUBJECTS = ['Math', 'Science', 'English/Language Arts', 'Social Studies', 'ESL', 'Art', 'Music', 'Physical Education', 'Special Education'];
+const GRADE_LEVELS = ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade'];
+const SUBJECTS = ['ELA', 'Math', 'Science', 'Social Studies'];
 const ENGLISH_PROFICIENCY = ['Entering', 'Emerging', 'Developing', 'Expanding', 'Bridging'];
 const ACADEMIC_LEVELS = ['Below Grade', 'At Grade', 'Above Grade'];
 const ACADEMIC_LEVELS_EXTENDED = ['Significantly Below Grade', 'Below Grade', 'At Grade', 'Above Grade', 'Significantly Above Grade'];
@@ -113,13 +113,15 @@ function CustomSelect({
 export function LessonPlanner() {
   const { user, signOut: handleSignOut } = useAuth();
   const [planLength, setPlanLength] = useState(PLAN_LENGTHS[0]);
-  const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[5]);
+  const [gradeLevel, setGradeLevel] = useState(GRADE_LEVELS[2]);
   const [subject, setSubject] = useState(SUBJECTS[1]);
   const [duration, setDuration] = useState('45');
   const [englishProficiency, setEnglishProficiency] = useState<string[]>([]);
   const [academicLevels, setAcademicLevels] = useState<string[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualObjectives, setManualObjectives] = useState('');
+  const [includeWorksheets, setIncludeWorksheets] = useState(false);
+  const [includeSlides, setIncludeSlides] = useState(false);
   const [isInputPanelOpen, setIsInputPanelOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'planner' | 'profile'>('planner');
@@ -176,9 +178,23 @@ export function LessonPlanner() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [savedPlans, setSavedPlans] = useState<any[]>([]);
 
   const contentRef = useRef<HTMLDivElement>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const loadSavedPlans = async () => {
+      try {
+        const plans = await api.lessonPlans.list();
+        setSavedPlans(plans);
+      } catch (error) {
+        console.error('Failed to load saved plans:', error);
+      }
+    };
+    loadSavedPlans();
+  }, []);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -207,6 +223,8 @@ export function LessonPlanner() {
         academicLevels,
         autoGenerate,
         manualObjectives,
+        includeWorksheets,
+        includeSlides,
         studentsContext
       });
       
@@ -222,7 +240,7 @@ export function LessonPlanner() {
       }
 
       try {
-        await api.lessonPlans.create({
+        const saved: any = await api.lessonPlans.create({
           content: plan.text,
           imagePrompt: plan.imagePrompt || undefined,
           imageBase64: image || undefined,
@@ -231,15 +249,18 @@ export function LessonPlanner() {
           subject,
           duration,
           classRosterId: selectedClassId || undefined,
-          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives },
+          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides },
         });
+        setCurrentPlanId(saved.id);
+        setSavedPlans(prev => [saved, ...prev]);
       } catch (saveError) {
         console.error('Failed to save lesson plan:', saveError);
       }
       
     } catch (error) {
       console.error("Failed to generate:", error);
-      alert("Failed to generate lesson plan. Please try again.");
+      const message = error instanceof Error ? error.message : 'Failed to generate lesson plan. Please try again.';
+      alert(message);
     } finally {
       setIsGenerating(false);
     }
@@ -291,10 +312,23 @@ export function LessonPlanner() {
     frame();
   };
 
-  const handleSave = () => {
-    triggerConfetti();
+  const handleSave = async () => {
+    if (!generatedPlan || !currentPlanId) return;
+    try {
+      await api.lessonPlans.update(currentPlanId, {
+        content: generatedPlan,
+        planLength,
+        gradeLevel,
+        subject,
+        duration,
+        classRosterId: selectedClassId || null,
+        parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides },
+      });
+      triggerConfetti();
+    } catch (error) {
+      console.error('Failed to save lesson plan:', error);
+    }
     setIsMobileMenuOpen(false);
-    // In a real app, save to database
   };
 
   const toggleMultiSelect = (item: string, state: string[], setState: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -778,17 +812,65 @@ export function LessonPlanner() {
                 <h2 className="text-xl font-serif font-bold text-[var(--color-deep-ink)] mb-4 flex items-center gap-2">
                   <Save className="w-5 h-5" /> Saved Plans
                 </h2>
-                <div className="space-y-3">
-                  {[
-                    { title: 'The Water Cycle Adventure', date: 'Oct 12' },
-                    { title: 'Fractions in the Real World', date: 'Oct 10' },
-                    { title: 'Introduction to Ecosystems', date: 'Oct 05' }
-                  ].map((plan, i) => (
-                    <div key={i} className="p-3 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] flex justify-between items-center cursor-pointer hover:border-[var(--color-sage-green)] transition-colors">
-                      <span className="font-bold text-sm truncate mr-2">{plan.title}</span>
-                      <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">{plan.date}</span>
-                    </div>
-                  ))}
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                  {savedPlans.length === 0 ? (
+                    <p className="text-sm text-[var(--color-charcoal-grey)] italic">No saved plans yet. Generate your first lesson!</p>
+                  ) : (
+                    savedPlans.map((plan) => (
+                      <div
+                        key={plan.id}
+                        className={`p-3 border-2 bg-[var(--color-whisper-white)] flex justify-between items-center cursor-pointer hover:border-[var(--color-sage-green)] transition-colors group ${currentPlanId === plan.id ? 'border-[var(--color-sage-green)] bg-[var(--color-soft-clay)]' : 'border-[var(--color-deep-ink)]'}`}
+                        onClick={() => {
+                          setGeneratedPlan(plan.content);
+                          setCurrentPlanId(plan.id);
+                          setImagePrompt(plan.imagePrompt || null);
+                          if (plan.imageKey) {
+                            api.fetchImageAsDataUrl(plan.imageKey).then(setGeneratedImage).catch(() => setGeneratedImage(null));
+                          } else {
+                            setGeneratedImage(null);
+                          }
+                          if (plan.planLength) setPlanLength(plan.planLength);
+                          if (plan.gradeLevel) setGradeLevel(plan.gradeLevel);
+                          if (plan.subject) setSubject(plan.subject);
+                          if (plan.duration) setDuration(plan.duration);
+                          setCurrentView('planner');
+                          setIsInputPanelOpen(false);
+                        }}
+                      >
+                        <div className="flex flex-col overflow-hidden mr-2">
+                          <span className="font-bold text-sm truncate">{plan.title || 'Untitled Plan'}</span>
+                          <span className="text-xs text-[var(--color-charcoal-grey)]">
+                            {plan.subject && plan.gradeLevel ? `${plan.subject} · ${plan.gradeLevel}` : ''}
+                            {plan.planLength ? ` · ${plan.planLength}` : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">
+                            {new Date(plan.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Delete this lesson plan?')) {
+                                api.lessonPlans.delete(plan.id).then(() => {
+                                  setSavedPlans(prev => prev.filter(p => p.id !== plan.id));
+                                  if (currentPlanId === plan.id) {
+                                    setCurrentPlanId(null);
+                                    setGeneratedPlan(null);
+                                    setGeneratedImage(null);
+                                  }
+                                }).catch(err => console.error('Failed to delete:', err));
+                              }
+                            }}
+                            className="p-1 text-[var(--color-charcoal-grey)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Delete plan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -949,6 +1031,38 @@ export function LessonPlanner() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Optional Add-ons */}
+          <div className="space-y-3 p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
+            <div>
+              <h3 className="font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Optional Add-ons</h3>
+              <p className="text-xs text-[var(--color-charcoal-grey)] mt-1">Generate extra teacher-ready assets with your lesson.</p>
+            </div>
+
+            <label className="flex items-center justify-between gap-3">
+              <span className="font-bold text-sm text-[var(--color-deep-ink)]">Include Worksheets</span>
+              <button
+                type="button"
+                onClick={() => setIncludeWorksheets(!includeWorksheets)}
+                className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${includeWorksheets ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
+                aria-label="Toggle worksheets add-on"
+              >
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${includeWorksheets ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </label>
+
+            <label className="flex items-center justify-between gap-3">
+              <span className="font-bold text-sm text-[var(--color-deep-ink)]">Include Slide Outline</span>
+              <button
+                type="button"
+                onClick={() => setIncludeSlides(!includeSlides)}
+                className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${includeSlides ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
+                aria-label="Toggle slides add-on"
+              >
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${includeSlides ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </label>
+          </div>
         </div>
 
         {/* Generate Button */}
@@ -1084,7 +1198,7 @@ export function LessonPlanner() {
                       <Sparkles className="absolute inset-0 m-auto w-10 h-10 md:w-12 md:h-12 text-[var(--color-gold-star)]" />
                     </div>
                     <h3 className="text-xl md:text-2xl font-serif font-bold text-[var(--color-deep-ink)] mb-4">Gemini Pro is crafting your {subject} plan...</h3>
-                    <p className="text-[var(--color-charcoal-grey)] font-mono text-sm md:text-base max-w-md">Analyzing grade level, differentiating for English proficiency, and structuring engaging activities.</p>
+                    <p className="text-[var(--color-charcoal-grey)] font-mono text-sm md:text-base max-w-md">Aligning objectives, Massachusetts standards, differentiation, and selected add-ons.</p>
                   </motion.div>
                 ) : generatedPlan ? (
                   <motion.div 
