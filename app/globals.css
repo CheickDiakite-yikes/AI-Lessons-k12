@@ -77,3 +77,305 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--color-charcoal-grey);
   font-style: italic;
 }
+
+/* Lesson plan markdown styling */
+.lesson-markdown {
+  color: var(--color-deep-ink);
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  line-height: 1.72;
+}
+
+.lesson-markdown > :first-child {
+  margin-top: 0;
+}
+
+.lesson-h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.2;
+  margin: 0 0 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 3px solid var(--color-deep-ink);
+}
+
+.lesson-h2 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+  margin: 2rem 0 1rem;
+  padding: 0.65rem 0.9rem;
+  border: 2px solid var(--color-deep-ink);
+  background: #f2ece5;
+  box-shadow: 3px 3px 0 0 var(--color-deep-ink);
+}
+
+.lesson-h2-addons {
+  background: #e5f1eb;
+}
+
+.lesson-h3 {
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+  margin: 1.4rem 0 0.65rem;
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--color-sage-green);
+}
+
+.lesson-h4 {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  margin: 1.05rem 0 0.45rem;
+}
+
+.worksheet-title {
+  border-left-color: var(--color-deep-ink);
+  background: #f7f2ea;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-deep-ink);
+}
+
+.worksheet-answer-title {
+  border-left-color: var(--color-sage-green);
+}
+
+.worksheet-subtitle,
+.worksheet-answer-subtitle,
+.worksheet-note-subtitle {
+  border: 1px solid var(--color-deep-ink);
+  background: #fbf8f3;
+  padding: 0.45rem 0.65rem;
+}
+
+.worksheet-answer-subtitle {
+  background: #edf6f1;
+}
+
+.worksheet-note-subtitle {
+  background: #f3f1ed;
+}
+
+.lesson-p {
+  margin: 0.65rem 0;
+}
+
+.lesson-ul,
+.lesson-ol {
+  margin: 0.75rem 0 1rem;
+  padding-left: 1.35rem;
+}
+
+.lesson-li {
+  margin: 0.4rem 0;
+  padding-left: 0.1rem;
+}
+
+.lesson-strong {
+  color: var(--color-deep-ink);
+  font-weight: 700;
+}
+
+.lesson-callout {
+  margin: 1rem 0;
+  padding: 0.7rem 0.9rem;
+  border-left: 4px solid var(--color-sage-green);
+  background: #f3f8f5;
+  color: var(--color-charcoal-grey);
+}
+
+.lesson-inline-image {
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--color-deep-ink);
+  margin: 1rem 0;
+  background: white;
+}
+
+.lesson-divider {
+  margin: 1rem 0;
+  height: 1px;
+  background: var(--color-concrete-light);
+}
+
+.worksheet-label {
+  margin-top: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.worksheet-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-deep-ink);
+  background: #f6f2ec;
+  font-weight: 600;
+}
+
+.worksheet-fill-line {
+  border-bottom: 1px dashed var(--color-concrete-light);
+  padding-bottom: 0.35rem;
+}
+
+.worksheet-choice-line {
+  border: 1px solid var(--color-concrete-light);
+  background: #fcfbf8;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+.worksheet-question-line {
+  margin-top: 0.55rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .lesson-markdown {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .lesson-h2 {
+    padding: 0.55rem 0.7rem;
+  }
+
+  .worksheet-meta-line {
+    gap: 0.5rem;
+  }
+}
+
+/* PDF export cleanup for html2pdf snapshot */
+.pdf-export-mode {
+  max-width: none !important;
+  min-height: auto !important;
+  padding: 36px !important;
+  border: 1px solid var(--color-deep-ink) !important;
+  box-shadow: none !important;
+  background: #fff !important;
+}
+
+.pdf-export-mode .lesson-binder-rings {
+  display: none !important;
+}
+
+.pdf-export-mode .lesson-paper-body {
+  padding-left: 0 !important;
+}
+
+.pdf-export-mode .lesson-hero-frame {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.pdf-export-mode .lesson-h1,
+.pdf-export-mode .lesson-h2,
+.pdf-export-mode .lesson-h3,
+.pdf-export-mode .lesson-h4,
+.pdf-export-mode .lesson-li,
+.pdf-export-mode .worksheet-meta-line,
+.pdf-export-mode .worksheet-choice-line,
+.pdf-export-mode .worksheet-fill-line {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-export-mode .worksheet-title {
+  page-break-before: always;
+  break-before: page;
+}
+
+/* Browser print styling */
+@media print {
+  @page {
+    size: Letter portrait;
+    margin: 0.5in;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body {
+    color: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .app-output-panel {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .lesson-canvas {
+    padding: 0 !important;
+    overflow: visible !important;
+    background-image: none !important;
+    opacity: 1 !important;
+  }
+
+  .lesson-paper {
+    max-width: none !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0.45in !important;
+    border: 1px solid #111 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .lesson-binder-rings {
+    display: none !important;
+  }
+
+  .lesson-paper-body {
+    padding-left: 0 !important;
+  }
+
+  .lesson-hero-frame {
+    transform: none !important;
+    box-shadow: none !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .lesson-markdown {
+    font-size: 11.5pt !important;
+    line-height: 1.55 !important;
+  }
+
+  .lesson-h1,
+  .lesson-h2,
+  .lesson-h3,
+  .lesson-h4 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .lesson-h2,
+  .lesson-h3,
+  .lesson-h4,
+  .lesson-li,
+  .worksheet-meta-line,
+  .worksheet-choice-line,
+  .worksheet-fill-line,
+  .worksheet-question-line {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .worksheet-title {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 0.25in;
+  }
+}

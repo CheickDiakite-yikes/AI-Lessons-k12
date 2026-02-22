@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, isValidElement, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, ChevronUp, Sparkles, Save, Printer, Share2, RefreshCw, PenLine, Image as ImageIcon, Menu, X, MoreVertical, User, Calendar, BookOpen, ArrowLeft, Camera, Plus, Trash2, Users, UserPlus, Edit2, Check } from 'lucide-react';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import confetti from 'canvas-confetti';
 import { generateLessonPlan, generateImage } from '@/lib/ai';
 import { useAuth } from '@/components/AuthProvider';
 import { api } from '@/lib/api-client';
+import { normalizeLessonMarkdown } from '@/lib/lesson-markdown';
 
 const PLAN_LENGTHS = ['Single Lesson', 'One Week', 'Two Weeks', 'Three Weeks', 'Four Weeks', 'One Quarter', 'One Semester'];
 const GRADE_LEVELS = ['1st Grade', '2nd Grade', '3rd Grade', '4th Grade', '5th Grade', '6th Grade'];
@@ -33,6 +34,53 @@ type ClassRoster = {
   name: string;
   students: Student[];
 };
+
+function getNodeText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node);
+  }
+  if (Array.isArray(node)) {
+    return node.map(getNodeText).join('');
+  }
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return getNodeText(node.props.children);
+  }
+  return '';
+}
+
+function getParagraphClass(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return 'lesson-p';
+  }
+  if (/^(name|date|student|class):/i.test(trimmed)) {
+    return 'lesson-p worksheet-meta-line';
+  }
+  if (/^[A-F][.)]\s/.test(trimmed)) {
+    return 'lesson-p worksheet-choice-line';
+  }
+  if (/_{6,}/.test(trimmed)) {
+    return 'lesson-p worksheet-fill-line';
+  }
+  if (/^(terms|definitions):$/i.test(trimmed)) {
+    return 'lesson-p worksheet-label';
+  }
+  return 'lesson-p';
+}
+
+function getListItemClass(text: string): string {
+  const trimmed = text.trim();
+  if (/^[A-F][.)]\s/.test(trimmed)) {
+    return 'lesson-li worksheet-choice-line';
+  }
+  if (/^\d+[.)]\s/.test(trimmed) && /_{6,}/.test(trimmed)) {
+    return 'lesson-li worksheet-fill-line';
+  }
+  if (/^\d+[.)]\s/.test(trimmed)) {
+    return 'lesson-li worksheet-question-line';
+  }
+  return 'lesson-li';
+}
 
 function CustomSelect({ 
   value, 
@@ -183,6 +231,47 @@ export function LessonPlanner() {
 
   const contentRef = useRef<HTMLDivElement>(null);
   const rosterRef = useRef<HTMLDivElement>(null);
+  const renderedPlan = useMemo(() => normalizeLessonMarkdown(generatedPlan ?? ''), [generatedPlan]);
+
+  const markdownComponents = useMemo<Components>(() => ({
+    h1: ({ children }) => <h1 className="lesson-h1">{children}</h1>,
+    h2: ({ children }) => {
+      const text = getNodeText(children).toLowerCase();
+      const className = text.includes('optional generated add-ons') ? 'lesson-h2 lesson-h2-addons' : 'lesson-h2';
+      return <h2 className={className}>{children}</h2>;
+    },
+    h3: ({ children }) => {
+      const text = getNodeText(children).toLowerCase();
+      if (text.includes('worksheet')) {
+        return <h3 className="lesson-h3 worksheet-title">{children}</h3>;
+      }
+      if (text.includes('answer key')) {
+        return <h3 className="lesson-h3 worksheet-answer-title">{children}</h3>;
+      }
+      return <h3 className="lesson-h3">{children}</h3>;
+    },
+    h4: ({ children }) => {
+      const text = getNodeText(children).toLowerCase();
+      if (text.includes('student copy')) {
+        return <h4 className="lesson-h4 worksheet-subtitle">{children}</h4>;
+      }
+      if (text.includes('answer key')) {
+        return <h4 className="lesson-h4 worksheet-answer-subtitle">{children}</h4>;
+      }
+      if (text.includes('differentiation note')) {
+        return <h4 className="lesson-h4 worksheet-note-subtitle">{children}</h4>;
+      }
+      return <h4 className="lesson-h4">{children}</h4>;
+    },
+    p: ({ children }) => <p className={getParagraphClass(getNodeText(children))}>{children}</p>,
+    ul: ({ children }) => <ul className="lesson-ul">{children}</ul>,
+    ol: ({ children }) => <ol className="lesson-ol">{children}</ol>,
+    li: ({ children }) => <li className={getListItemClass(getNodeText(children))}>{children}</li>,
+    strong: ({ children }) => <strong className="lesson-strong">{children}</strong>,
+    blockquote: ({ children }) => <blockquote className="lesson-callout">{children}</blockquote>,
+    img: ({ src, alt }) => <img src={src || ''} alt={alt || 'Lesson visual'} className="lesson-inline-image" />,
+    hr: () => <div className="lesson-divider" aria-hidden="true" />,
+  }), []);
 
   useEffect(() => {
     const loadSavedPlans = async () => {
@@ -271,18 +360,29 @@ export function LessonPlanner() {
     
     // Dynamically import html2pdf to avoid SSR issues
     const html2pdf = (await import('html2pdf.js')).default;
+    const exportNode = contentRef.current;
     
     const opt = {
       margin:       10,
       filename:     `Lesson_Plan_${subject}_${gradeLevel}.pdf`,
       image:        { type: 'jpeg' as const, quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      jsPDF:        { unit: 'mm' as const, format: 'letter' as const, orientation: 'portrait' as const }
     };
-    
-    html2pdf().set(opt).from(contentRef.current).save().then(() => {
+
+    exportNode.classList.add('pdf-export-mode');
+    document.body.classList.add('pdf-exporting');
+
+    try {
+      await html2pdf().set(opt).from(exportNode).save();
       triggerConfetti();
-    });
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert('Failed to export PDF. Please try again.');
+    } finally {
+      exportNode.classList.remove('pdf-export-mode');
+      document.body.classList.remove('pdf-exporting');
+    }
   };
 
   const triggerConfetti = () => {
@@ -881,9 +981,15 @@ export function LessonPlanner() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[var(--color-whisper-white)]">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-whisper-white)]">
       {/* Left Panel - Input Journal */}
-      <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} md:flex w-full md:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-screen sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-20`}>
+      {isInputPanelOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          onClick={() => setIsInputPanelOpen(false)}
+        />
+      )}
+      <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} lg:flex fixed lg:relative inset-y-0 left-0 w-[85%] sm:w-[70%] md:w-[50%] lg:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-screen lg:sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-40 lg:z-20 app-input-panel no-print`}>
         <div className="p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between">
           <h1 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
             <PenLine className="w-6 h-6" />
@@ -891,7 +997,7 @@ export function LessonPlanner() {
           </h1>
           <button 
             onClick={() => setIsInputPanelOpen(false)}
-            className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+            className="lg:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
             aria-label="Close input panel"
           >
             <X className="w-5 h-5" />
@@ -1088,13 +1194,13 @@ export function LessonPlanner() {
       </div>
 
       {/* Right Panel - Output Area */}
-      <div className={`${isInputPanelOpen ? 'hidden' : 'flex'} md:flex w-full md:w-3/4 flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative`}>
+      <div className="flex w-full lg:w-3/4 flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative app-output-panel">
         {/* Top Action Bar */}
-        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-10">
+        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-10 app-top-action-bar no-print">
           <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={() => setIsInputPanelOpen(true)}
-              className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
+              className="lg:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
               aria-label="Open input panel"
             >
               <Menu className="w-5 h-5" />
@@ -1103,14 +1209,14 @@ export function LessonPlanner() {
           </div>
           <div className="flex items-center gap-2 md:gap-4 relative">
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-4">
-              <button onClick={handleSave} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+            <div className="hidden md:flex items-center gap-2 lg:gap-4">
+              <button onClick={handleSave} className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
                 <Save className="w-4 h-4" /> <span>Save</span>
               </button>
-              <button onClick={handleExportPDF} className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
-                <Printer className="w-4 h-4" /> <span>Export PDF</span>
+              <button onClick={handleExportPDF} className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+                <Printer className="w-4 h-4" /> <span className="hidden lg:inline">Export</span> <span>PDF</span>
               </button>
-              <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
+              <button className="flex items-center gap-1.5 px-2 lg:px-3 py-1.5 font-bold text-sm border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none">
                 <Share2 className="w-4 h-4" /> <span>Share</span>
               </button>
             </div>
@@ -1134,7 +1240,7 @@ export function LessonPlanner() {
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden flex items-center justify-center p-2 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-              aria-label="More actions"
+              aria-label="More actions menu"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
@@ -1164,22 +1270,22 @@ export function LessonPlanner() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 relative" style={{
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 relative lesson-canvas" style={{
           backgroundImage: 'linear-gradient(var(--color-concrete-light) 1px, transparent 1px), linear-gradient(90deg, var(--color-concrete-light) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           backgroundPosition: '-1px -1px',
           opacity: 0.8
         }}>
-          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-6 md:p-10 relative z-10" ref={contentRef}>
+          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-6 md:p-10 relative z-10 lesson-paper" ref={contentRef}>
             
             {/* Binder Rings Decoration */}
-            <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 border-r-2 border-[var(--color-deep-ink)] flex flex-col justify-evenly items-center bg-[var(--color-soft-clay)]">
+            <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 border-r-2 border-[var(--color-deep-ink)] flex flex-col justify-evenly items-center bg-[var(--color-soft-clay)] lesson-binder-rings">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-[var(--color-whisper-white)] border-2 border-[var(--color-deep-ink)] shadow-inner"></div>
               ))}
             </div>
 
-            <div className="pl-8 md:pl-10">
+            <div className="pl-8 md:pl-10 lesson-paper-body">
               <AnimatePresence mode="wait">
                 {isGenerating ? (
                   <motion.div 
@@ -1205,11 +1311,11 @@ export function LessonPlanner() {
                     key="content"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="prose prose-lg md:prose-xl max-w-none"
+                    className="max-w-none"
                   >
                     {/* Render Image if available */}
                     {(generatedImage || isGeneratingImage) && (
-                      <div className="mb-8 border-2 border-[var(--color-deep-ink)] p-2 bg-white shadow-[4px_4px_0px_0px_var(--color-deep-ink)] transform -rotate-1 hover:rotate-0 transition-transform">
+                      <div className="mb-8 border-2 border-[var(--color-deep-ink)] p-2 bg-white shadow-[4px_4px_0px_0px_var(--color-deep-ink)] transform -rotate-1 hover:rotate-0 transition-transform lesson-hero-frame">
                         {isGeneratingImage ? (
                           <div className="w-full aspect-video bg-[var(--color-soft-clay)] animate-pulse flex items-center justify-center">
                             <ImageIcon className="w-12 h-12 text-[var(--color-concrete-light)]" />
@@ -1223,8 +1329,8 @@ export function LessonPlanner() {
                       </div>
                     )}
 
-                    <div className="markdown-body">
-                      <Markdown>{generatedPlan}</Markdown>
+                    <div className="lesson-markdown">
+                      <Markdown components={markdownComponents}>{renderedPlan}</Markdown>
                     </div>
                   </motion.div>
                 ) : (

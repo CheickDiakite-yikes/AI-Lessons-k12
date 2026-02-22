@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { normalizeLessonMarkdown } from '@/lib/lesson-markdown';
 
 type LessonPlanParams = {
   planLength: string;
@@ -33,6 +34,7 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
 You are an expert Massachusetts elementary curriculum designer and master teacher.
 
 Generate a complete, highly practical K-6 lesson package in Markdown.
+Output must render cleanly in plain CommonMark.
 
 Context:
 - Plan Length: ${params.planLength}
@@ -46,6 +48,14 @@ ${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectiv
 - Include Worksheet Add-ons: ${includeWorksheets ? 'Yes' : 'No'}
 - Include Slide Add-ons: ${includeSlides ? 'Yes' : 'No'}
 ${params.studentsContext ? `- Class Roster Context (use names for personalization):\n${params.studentsContext}` : ''}
+
+Formatting rules (strict):
+- Use ATX headings only (#, ##, ###, ####).
+- Do NOT use markdown tables, pipe characters, HTML tags, code fences, or horizontal rules.
+- Use standard bullets and numbered lists only.
+- Keep worksheet questions on separate lines.
+- For fill-in-the-blank, use at least 12 underscores: ____________.
+- For multiple choice, options must be on separate lines prefixed with A), B), C), D).
 
 Output requirements:
 1) Use this exact major section structure:
@@ -76,10 +86,10 @@ ${includeWorksheets || includeSlides ? '- ## Optional Generated Add-ons' : ''}
 - Preparation and Materials:
   - Required Materials (bulleted checklist)
   - Key Vocabulary:
-    - Markdown table with columns:
-      - Term
-      - Student-Friendly Definition
-      - Child-Friendly Illustration Prompt
+    - Provide 6-10 entries using this repeated format:
+      - **Term:** ...
+      - **Student-Friendly Definition:** ...
+      - **Child-Friendly Illustration Prompt:** ...
 
 - Instruction and Activities:
   - Lesson Procedure:
@@ -97,7 +107,33 @@ ${hasRoster ? '    - Hyper-personalize by named students from the roster and pro
     - 2-3 practical tips including likely misconceptions and management moves.
 
 ${includeWorksheets || includeSlides ? `- Optional Generated Add-ons:
-${includeWorksheets ? '  - Worksheets:\n    - Provide 3 printable worksheet sets: Matching, Fill in the Blank, and Multiple Choice.\n    - Align with lesson vocabulary/objectives.\n    - Include answer keys and differentiation notes.\n' : ''}${includeSlides ? '  - Presentation Slides:\n    - Provide a 5-10 slide outline.\n    - For each slide include: slide title, 3-5 bullet points, and a 16:9 visual prompt that is relevant to the topic and age group (not limited to cartoon style).\n' : ''}` : ''}
+${includeWorksheets ? `  - Worksheets:
+    - Provide exactly 3 worksheet sets with these exact headings in this order:
+      - ### Worksheet 1: Matching
+      - ### Worksheet 2: Fill in the Blank
+      - ### Worksheet 3: Multiple Choice
+    - For each worksheet, include these exact subheadings in this order:
+      - #### Student Copy
+      - #### Answer Key
+      - #### Differentiation Note
+    - Student Copy must begin with: Name: ____________   Date: ____________
+    - Matching worksheet format:
+      - Include "Terms" list with 6 numbered items.
+      - Include "Definitions" list with 6 lettered items (A-F).
+    - Fill in the Blank worksheet format:
+      - Include 8-10 numbered sentences.
+      - Each sentence has exactly one blank with underscores.
+    - Multiple Choice worksheet format:
+      - Include 8-10 numbered questions.
+      - Each question includes exactly 4 options, each on its own line as A), B), C), D).
+    - Answer key format:
+      - Matching: list answers as 1-A format.
+      - Fill in the Blank: list each number with expected answer.
+      - Multiple Choice: list number + correct letter + a short rationale (max 1 sentence).
+` : ''}${includeSlides ? `  - Presentation Slides:
+    - Provide a 5-10 slide outline.
+    - For each slide include: slide title, 3-5 bullet points, and a 16:9 visual prompt relevant to the topic and age group.
+` : ''}` : ''}
 
 3) Tone:
 - Professional, classroom-ready, concise but specific.
@@ -113,7 +149,7 @@ ${includeWorksheets ? '  - Worksheets:\n    - Provide 3 printable worksheet sets
     model: 'gemini-3.1-pro-preview',
     contents: prompt,
     config: {
-      temperature: 0.7,
+      temperature: 0.45,
     },
   });
 
@@ -124,7 +160,9 @@ ${includeWorksheets ? '  - Worksheets:\n    - Provide 3 printable worksheet sets
     imagePrompt = match[1].trim();
   }
 
-  const cleanText = text.replace(/<IMAGE_PROMPT>[\s\S]*?<\/IMAGE_PROMPT>/, '').trim();
+  const cleanText = normalizeLessonMarkdown(
+    text.replace(/<IMAGE_PROMPT>[\s\S]*?<\/IMAGE_PROMPT>/, '').trim(),
+  );
 
   return {
     text: cleanText,
