@@ -1,0 +1,25 @@
+{
+  "name": "LessonCraft – AI Lesson Planner",
+  "short_name": "LessonCraft",
+  "description": "The AI-powered lesson planner that actually understands your classroom. Build highly differentiated, engaging K-12 lesson plans in seconds.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#4a6741",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

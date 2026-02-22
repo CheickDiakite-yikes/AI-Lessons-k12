@@ -92,19 +92,28 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/og-image.png',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
+  manifest: '/manifest.json',
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': siteName,
+    'mobile-web-app-capable': 'yes',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${crimson.variable} ${fira.variable}`}>
+      <head>
+        <meta name="theme-color" content="#4a6741" />
+      </head>
       <body suppressHydrationWarning className="antialiased selection:bg-[var(--color-sage-green)] selection:text-white">
         {children}
       </body>
