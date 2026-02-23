@@ -28,7 +28,7 @@ export function ApiKeyGate({ children }: { children: React.ReactNode }) {
 
   if (hasKey === null) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--color-whisper-white)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-whisper-white)]">
         <div className="animate-pulse flex space-x-4">
           <div className="rounded-full bg-[var(--color-sage-green)] h-10 w-10"></div>
           <div className="flex-1 space-y-6 py-1">
@@ -48,7 +48,7 @@ export function ApiKeyGate({ children }: { children: React.ReactNode }) {
 
   if (!hasKey) {
     return (
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[var(--color-whisper-white)] p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-whisper-white)] p-4">
         <div className="bg-[var(--color-soft-clay)] p-8 rounded-xl border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] max-w-md text-center">
           <h1 className="text-3xl font-serif font-bold mb-4 text-[var(--color-deep-ink)]">API Key Required</h1>
           <p className="mb-6 text-[var(--color-charcoal-grey)]">

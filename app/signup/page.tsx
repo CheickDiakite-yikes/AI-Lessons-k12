@@ -97,14 +97,14 @@ export default function SignupPage() {
   const inputClass = "w-full px-3 py-2.5 bg-white text-[var(--color-deep-ink)] border-2 border-[var(--color-deep-ink)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-sage-green)] focus:border-[var(--color-sage-green)] placeholder:text-gray-400";
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--color-crisp-page)] flex flex-col items-center justify-center p-3 sm:p-4 font-sans">
-      <div className="w-full max-w-md bg-white border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] p-5 sm:p-8">
+    <div className="min-h-screen bg-[var(--color-crisp-page)] flex flex-col items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-md bg-white border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] p-8">
         <div className="flex flex-col items-center mb-6">
           <Link href="/" className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
-              <CustomLogo className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            <div className="w-12 h-12 bg-[var(--color-sage-green)] border-2 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
+              <CustomLogo className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-[var(--color-deep-ink)] leading-none">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
+            <span className="text-3xl font-serif font-black tracking-tight text-[var(--color-deep-ink)]">Lesson<span className="text-[var(--color-sage-green)]">Craft</span></span>
           </Link>
           <h1 className="text-2xl font-bold text-[var(--color-deep-ink)]">Create an Account</h1>
           <p className="text-sm text-[var(--color-charcoal-grey)] mt-2">Join LessonCraft to start planning</p>

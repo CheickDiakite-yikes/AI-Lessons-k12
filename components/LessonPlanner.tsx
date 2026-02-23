@@ -984,7 +984,7 @@ Design requirements:
 
   if (currentView === 'profile') {
     return (
-      <div className="min-h-[100dvh] bg-[var(--color-whisper-white)] p-3 sm:p-4 md:p-8">
+      <div className="min-h-screen bg-[var(--color-whisper-white)] p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Top Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b-2 border-[var(--color-deep-ink)] gap-4">
@@ -1020,7 +1020,7 @@ Design requirements:
                 />
               </div>
               <div className="flex flex-col">
-                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
+                <h1 className="text-3xl font-serif font-bold text-[var(--color-deep-ink)]">
                   {user?.name || 'Teacher Profile'}
                 </h1>
                 <button 
@@ -1142,12 +1142,12 @@ Design requirements:
               {selectedClassIdForRoster ? (
                 <div className="bg-[var(--color-crisp-page)] p-6 border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] h-full flex flex-col">
                   <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                      <h2 className="text-xl sm:text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
                         <Users className="w-6 h-6" /> {classes.find(c => c.id === selectedClassIdForRoster)?.name} Roster
                       </h2>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex gap-2">
                       <button onClick={() => setSelectedClassIdForRoster(null)} className="px-3 py-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] font-bold text-sm hover:bg-[var(--color-soft-clay)]">
                         Close Roster
                       </button>
@@ -1418,7 +1418,7 @@ Design requirements:
                           )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">
+                          <span className="text-xs font-mono text-[var(--color-charcoal-grey)] whitespace-nowrap">
                             {new Date(plan.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
                           <button
@@ -1456,7 +1456,7 @@ Design requirements:
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[100dvh] bg-[var(--color-whisper-white)]">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[var(--color-whisper-white)]">
       {/* Left Panel - Input Journal */}
       {isInputPanelOpen && (
         <div 
@@ -1464,9 +1464,9 @@ Design requirements:
           onClick={() => setIsInputPanelOpen(false)}
         />
       )}
-      <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} lg:flex fixed lg:relative inset-y-0 left-0 w-[92vw] min-w-[17rem] sm:w-[72vw] md:w-[56vw] lg:w-[22rem] xl:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-[100dvh] lg:sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-40 lg:z-20 app-input-panel no-print`}>
-        <div className="p-4 sm:p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2 min-w-0">
+      <div className={`${isInputPanelOpen ? 'flex' : 'hidden'} lg:flex fixed lg:relative inset-y-0 left-0 w-[85%] sm:w-[70%] md:w-[50%] lg:w-1/4 bg-[var(--color-soft-clay)] border-r-4 border-[var(--color-deep-ink)] flex-col h-screen lg:sticky top-0 overflow-y-auto shadow-[4px_0px_0px_var(--color-deep-ink)] z-40 lg:z-20 app-input-panel no-print`}>
+        <div className="p-6 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky top-0 z-20 flex items-center justify-between">
+          <h1 className="text-2xl font-serif font-bold text-[var(--color-deep-ink)] flex items-center gap-2">
             <PenLine className="w-6 h-6" />
             The Input Journal
           </h1>
@@ -1479,7 +1479,7 @@ Design requirements:
           </button>
         </div>
         
-        <div className="p-4 sm:p-6 space-y-8 flex-1">
+        <div className="p-6 space-y-8 flex-1">
           {/* Target Class/Roster (Optional) */}
           {classes.length > 0 && (
             <div className="space-y-2">
@@ -1524,7 +1524,7 @@ Design requirements:
           </div>
 
           {/* Duration & Start Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Duration (mins)</label>
               <input 
@@ -1590,16 +1590,14 @@ Design requirements:
           )}
 
           {/* Auto Generate Toggle */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
+          <div className="flex items-center justify-between p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
             <div className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 md:w-5 md:h-5 text-[var(--color-gold-star)]" />
               <span className="font-bold text-[var(--color-deep-ink)] text-base md:text-sm">Auto-Generate Objectives</span>
             </div>
             <button 
-              type="button"
               onClick={() => setAutoGenerate(!autoGenerate)}
               className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${autoGenerate ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
-              aria-pressed={autoGenerate}
             >
               <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${autoGenerate ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
             </button>
@@ -1640,7 +1638,6 @@ Design requirements:
                 onClick={() => setIncludeWorksheets(!includeWorksheets)}
                 className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${includeWorksheets ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
                 aria-label="Toggle worksheets add-on"
-                aria-pressed={includeWorksheets}
               >
                 <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${includeWorksheets ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
               </button>
@@ -1653,7 +1650,6 @@ Design requirements:
                 onClick={() => setIncludeSlides(!includeSlides)}
                 className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${includeSlides ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
                 aria-label="Toggle slides add-on"
-                aria-pressed={includeSlides}
               >
                 <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${includeSlides ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
               </button>
@@ -1662,7 +1658,7 @@ Design requirements:
         </div>
 
         {/* Generate Button */}
-        <div className="p-4 sm:p-6 border-t-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky bottom-0 z-20">
+        <div className="p-6 border-t-2 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] sticky bottom-0 z-20">
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
@@ -1684,9 +1680,9 @@ Design requirements:
       </div>
 
       {/* Right Panel - Output Area */}
-      <div className="flex w-full flex-1 flex-col h-[100dvh] min-h-[100dvh] min-w-0 overflow-hidden bg-[var(--color-whisper-white)] relative app-output-panel">
+      <div className="flex w-full lg:w-3/4 flex-col h-screen overflow-hidden bg-[var(--color-whisper-white)] relative app-output-panel">
         {/* Top Action Bar */}
-        <div className="min-h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-3 sm:px-4 md:px-6 py-2 shrink-0 z-30 app-top-action-bar no-print relative gap-2">
+        <div className="h-16 border-b-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] flex items-center justify-between px-4 md:px-6 shrink-0 z-30 app-top-action-bar no-print relative">
           <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={() => setIsInputPanelOpen(true)}
@@ -1695,7 +1691,7 @@ Design requirements:
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="font-serif font-bold text-base sm:text-lg md:text-xl text-[var(--color-deep-ink)] truncate">The Lesson Masterpiece</h2>
+            <h2 className="font-serif font-bold text-lg md:text-xl text-[var(--color-deep-ink)] truncate">The Lesson Masterpiece</h2>
           </div>
           <div className="flex items-center gap-2 md:gap-4 relative">
             {/* Desktop Actions */}
@@ -1759,12 +1755,12 @@ Design requirements:
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 lg:p-10 relative lesson-canvas" style={{
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 relative lesson-canvas" style={{
           backgroundImage: 'linear-gradient(var(--color-concrete-light) 1px, transparent 1px), linear-gradient(90deg, var(--color-concrete-light) 1px, transparent 1px)',
           backgroundSize: '20px 20px',
           backgroundPosition: '-1px -1px',
         }}>
-          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[620px] md:min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-4 sm:p-6 md:p-10 relative z-10 lesson-paper" ref={contentRef}>
+          <div className="max-w-4xl mx-auto bg-[var(--color-crisp-page)] min-h-[800px] border-2 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] md:shadow-[12px_12px_0px_0px_var(--color-deep-ink)] p-6 md:p-10 relative z-10 lesson-paper" ref={contentRef}>
             
             {/* Binder Rings Decoration */}
             <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 border-r-2 border-[var(--color-deep-ink)] flex flex-col justify-evenly items-center bg-[var(--color-soft-clay)] lesson-binder-rings">

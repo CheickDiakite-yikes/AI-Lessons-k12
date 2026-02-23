@@ -18,7 +18,7 @@ function HomeContent() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-[var(--color-crisp-page)]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-crisp-page)]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[var(--color-deep-ink)]"></div>
       </div>
     );

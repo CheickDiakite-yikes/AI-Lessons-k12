@@ -228,7 +228,7 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
               key={`${event.planId}-${i}`}
               type="button"
               onClick={() => onPlanClick(event.planId, event.dayNumber - 1)}
-              className={`${getSubjectColor(event.subject)} text-[10px] md:text-[11px] font-bold px-1 py-0.5 truncate border border-[var(--color-deep-ink)] text-left hover:brightness-110 transition-all cursor-pointer leading-tight`}
+              className={`${getSubjectColor(event.subject)} text-[9px] md:text-[10px] font-bold px-1 py-0.5 truncate border border-[var(--color-deep-ink)] text-left hover:brightness-110 transition-all cursor-pointer`}
               title={`${event.title} – Day ${event.dayNumber}/${event.totalDays}`}
             >
               {isWeekView ? (
@@ -252,13 +252,13 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
         <div className="flex gap-1">
           <button
             onClick={() => setViewMode('month')}
-            className={`px-2.5 md:px-3 py-1.5 border-2 border-[var(--color-deep-ink)] font-bold text-xs md:text-sm ${viewMode === 'month' ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]'}`}
+            className={`px-2 md:px-3 py-1 border-2 border-[var(--color-deep-ink)] font-bold text-xs md:text-sm ${viewMode === 'month' ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]'}`}
           >
             Month
           </button>
           <button
             onClick={() => setViewMode('week')}
-            className={`px-2.5 md:px-3 py-1.5 border-2 border-[var(--color-deep-ink)] font-bold text-xs md:text-sm ${viewMode === 'week' ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]'}`}
+            className={`px-2 md:px-3 py-1 border-2 border-[var(--color-deep-ink)] font-bold text-xs md:text-sm ${viewMode === 'week' ? 'bg-[var(--color-sage-green)] text-white' : 'bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]'}`}
           >
             Week
           </button>
@@ -268,16 +268,16 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={() => viewMode === 'month' ? navigateMonth(-1) : navigateWeek(-1)}
-          className="p-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]"
+          className="p-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <h3 className="font-serif font-bold text-xs sm:text-sm md:text-base text-[var(--color-deep-ink)] text-center px-2">
+        <h3 className="font-serif font-bold text-sm md:text-base text-[var(--color-deep-ink)]">
           {viewMode === 'month' ? monthName : weekLabel}
         </h3>
         <button
           onClick={() => viewMode === 'month' ? navigateMonth(1) : navigateWeek(1)}
-          className="p-1.5 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]"
+          className="p-1 border-2 border-[var(--color-deep-ink)] bg-[var(--color-whisper-white)] hover:bg-[var(--color-soft-clay)]"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -309,7 +309,7 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
         {Object.entries(SUBJECT_COLORS).map(([subject, color]) => (
           <div key={subject} className="flex items-center gap-1">
             <div className={`w-2.5 h-2.5 ${color} border border-[var(--color-deep-ink)]`} />
-            <span className="text-xs font-mono text-[var(--color-charcoal-grey)]">{subject}</span>
+            <span className="text-[10px] font-mono text-[var(--color-charcoal-grey)]">{subject}</span>
           </div>
         ))}
       </div>

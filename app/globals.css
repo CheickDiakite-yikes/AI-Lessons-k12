@@ -17,35 +17,14 @@
   --font-mono: var(--font-fira), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
 body {
   background-color: var(--color-whisper-white);
   color: var(--color-deep-ink);
   font-family: var(--font-sans);
-  line-height: 1.5;
-  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
-}
-
-img,
-svg,
-video,
-canvas {
-  max-width: 100%;
-}
-
-input,
-select,
-textarea,
-button {
-  touch-action: manipulation;
 }
 
 /* Custom scrollbar for the notebook feel */
@@ -105,8 +84,6 @@ button {
   font-family: var(--font-sans);
   font-size: 1.05rem;
   line-height: 1.72;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .lesson-markdown > :first-child {
@@ -407,12 +384,6 @@ button {
 }
 
 @media (max-width: 768px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px;
-  }
-
   .lesson-markdown {
     font-size: 1rem;
     line-height: 1.65;

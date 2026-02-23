@@ -55,19 +55,19 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] overflow-x-hidden flex flex-col">
+    <div className="min-h-screen bg-[var(--color-whisper-white)] font-sans text-[var(--color-deep-ink)] overflow-x-hidden flex flex-col">
       {/* Navigation */}
       <PublicNav onLaunch={onLaunch} />
 
       {/* Hero Section */}
-      <section className="relative pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-24 md:pb-32 px-4 sm:px-6 overflow-hidden">
+      <section className="relative pt-20 pb-32 px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="text-[clamp(2.5rem,11vw,5.5rem)] font-serif font-black leading-[0.9] tracking-tighter mb-6 uppercase">
+            <h1 className="text-6xl md:text-8xl font-serif font-black leading-[0.9] tracking-tighter mb-6 uppercase">
               Craft Lessons.<br/>
               <span className="text-[var(--color-sage-green)] relative inline-block">
                 Not Stress.
@@ -83,13 +83,13 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
                 </motion.svg>
               </span>
             </h1>
-            <p className="text-base sm:text-lg md:text-2xl text-[var(--color-charcoal-grey)] mb-8 sm:mb-10 max-w-2xl mx-auto font-medium">
+            <p className="text-xl md:text-2xl text-[var(--color-charcoal-grey)] mb-10 max-w-2xl mx-auto font-medium">
               The AI-powered lesson planner that actually understands your classroom. Build highly differentiated, engaging plans in seconds.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
                 onClick={onLaunch}
-                className="w-full sm:w-auto bg-[var(--color-sage-green)] text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg md:text-xl font-bold border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] hover:translate-y-[4px] hover:translate-x-[4px] hover:shadow-[4px_4px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[8px] active:translate-x-[8px] active:shadow-none flex items-center justify-center gap-3"
+                className="w-full sm:w-auto bg-[var(--color-sage-green)] text-white px-8 py-4 text-xl font-bold border-4 border-[var(--color-deep-ink)] shadow-[8px_8px_0px_0px_var(--color-deep-ink)] hover:translate-y-[4px] hover:translate-x-[4px] hover:shadow-[4px_4px_0px_0px_var(--color-deep-ink)] transition-all active:translate-y-[8px] active:translate-x-[8px] active:shadow-none flex items-center justify-center gap-3"
               >
                 Start Planning Free <ArrowRight className="w-6 h-6" />
               </button>
@@ -112,25 +112,25 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
 
       {/* Social Proof Carousel */}
       <section className="py-10 border-y-4 border-[var(--color-deep-ink)] bg-[var(--color-soft-clay)] overflow-hidden">
-        <p className="text-center font-bold uppercase tracking-widest text-xs sm:text-sm mb-6 text-[var(--color-charcoal-grey)]">Trusted by forward-thinking educators at</p>
+        <p className="text-center font-bold uppercase tracking-widest text-sm mb-6 text-[var(--color-charcoal-grey)]">Trusted by forward-thinking educators at</p>
         <div className="flex whitespace-nowrap animate-[marquee_20s_linear_infinite]">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex gap-10 sm:gap-16 px-6 sm:px-8 items-center">
-              <span className="text-lg sm:text-2xl font-serif font-black opacity-50">OAKRIDGE ACADEMY</span>
-              <span className="text-lg sm:text-2xl font-serif font-black opacity-50">LINCOLN HIGH</span>
-              <span className="text-lg sm:text-2xl font-serif font-black opacity-50">MONTESSORI PREP</span>
-              <span className="text-lg sm:text-2xl font-serif font-black opacity-50">WESTSIDE ELEMENTARY</span>
-              <span className="text-lg sm:text-2xl font-serif font-black opacity-50">GLOBAL SCHOLARS</span>
+            <div key={i} className="flex gap-16 px-8 items-center">
+              <span className="text-2xl font-serif font-black opacity-50">OAKRIDGE ACADEMY</span>
+              <span className="text-2xl font-serif font-black opacity-50">LINCOLN HIGH</span>
+              <span className="text-2xl font-serif font-black opacity-50">MONTESSORI PREP</span>
+              <span className="text-2xl font-serif font-black opacity-50">WESTSIDE ELEMENTARY</span>
+              <span className="text-2xl font-serif font-black opacity-50">GLOBAL SCHOLARS</span>
             </div>
           ))}
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 max-w-6xl mx-auto">
+      <section className="py-24 px-6 max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black mb-4 uppercase">How It Works</h2>
-          <p className="text-base sm:text-lg md:text-xl text-[var(--color-charcoal-grey)]">Three simple steps to your perfect lesson plan.</p>
+          <h2 className="text-5xl font-serif font-black mb-4 uppercase">How It Works</h2>
+          <p className="text-xl text-[var(--color-charcoal-grey)]">Three simple steps to your perfect lesson plan.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -142,12 +142,12 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
             <motion.div 
               key={i}
               whileHover={{ y: -10 }}
-              className="bg-[var(--color-crisp-page)] border-4 border-[var(--color-deep-ink)] p-6 sm:p-8 shadow-[8px_8px_0px_0px_var(--color-deep-ink)] relative"
+              className="bg-[var(--color-crisp-page)] border-4 border-[var(--color-deep-ink)] p-8 shadow-[8px_8px_0px_0px_var(--color-deep-ink)] relative"
             >
               <div className={`w-16 h-16 ${step.color} border-4 border-[var(--color-deep-ink)] rounded-full flex items-center justify-center mb-6 shadow-[4px_4px_0px_0px_var(--color-deep-ink)] absolute -top-8 -left-4`}>
                 <step.icon className="w-8 h-8 text-[var(--color-deep-ink)]" />
               </div>
-              <h3 className="text-xl sm:text-2xl font-black mb-4 mt-4">{step.title}</h3>
+              <h3 className="text-2xl font-black mb-4 mt-4">{step.title}</h3>
               <p className="text-[var(--color-charcoal-grey)] font-medium leading-relaxed">{step.desc}</p>
             </motion.div>
           ))}
@@ -155,11 +155,11 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-[var(--color-deep-ink)] text-white border-y-4 border-[var(--color-deep-ink)]">
+      <section className="py-24 px-6 bg-[var(--color-deep-ink)] text-white border-y-4 border-[var(--color-deep-ink)]">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black mb-8 uppercase text-[var(--color-whisper-white)]">Differentiated by Design.</h2>
+              <h2 className="text-5xl font-serif font-black mb-8 uppercase text-[var(--color-whisper-white)]">Differentiated by Design.</h2>
               <div className="space-y-6">
                 {[
                   "Deep Roster Integration for personalized activities",
@@ -172,20 +172,20 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
                     <div className="w-8 h-8 bg-[var(--color-sage-green)] border-2 border-white rounded-full flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-base sm:text-lg md:text-xl font-medium">{feature}</span>
+                    <span className="text-xl font-medium">{feature}</span>
                   </div>
                 ))}
               </div>
               <button 
                 onClick={onLaunch}
-                className="mt-10 bg-[var(--color-gold-star)] text-[var(--color-deep-ink)] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg md:text-xl font-bold border-4 border-white shadow-[8px_8px_0px_0px_#ffffff] hover:translate-y-[4px] hover:translate-x-[4px] hover:shadow-[4px_4px_0px_0px_#ffffff] transition-all active:translate-y-[8px] active:translate-x-[8px] active:shadow-none"
+                className="mt-10 bg-[var(--color-gold-star)] text-[var(--color-deep-ink)] px-8 py-4 text-xl font-bold border-4 border-white shadow-[8px_8px_0px_0px_#ffffff] hover:translate-y-[4px] hover:translate-x-[4px] hover:shadow-[4px_4px_0px_0px_#ffffff] transition-all active:translate-y-[8px] active:translate-x-[8px] active:shadow-none"
               >
                 Try It Now
               </button>
             </div>
             <div className="relative">
               <div className="absolute inset-0 bg-[var(--color-sage-green)] translate-x-4 translate-y-4 border-4 border-white"></div>
-              <div className="relative bg-[var(--color-crisp-page)] border-4 border-white p-5 sm:p-6 h-[340px] sm:h-[430px] md:h-[500px] flex flex-col">
+              <div className="relative bg-[var(--color-crisp-page)] border-4 border-white p-6 h-[500px] flex flex-col">
                 <div className="flex items-center justify-between border-b-4 border-[var(--color-deep-ink)] pb-4 mb-4">
                   <div className="flex gap-2">
                     <div className="w-4 h-4 rounded-full bg-red-500 border-2 border-[var(--color-deep-ink)]"></div>
@@ -213,9 +213,9 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       </section>
 
       {/* Testimonials */}
-      <section className="py-16 sm:py-20 md:py-24 overflow-hidden">
+      <section className="py-24 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black mb-16 text-center uppercase">Wall of Love</h2>
+          <h2 className="text-5xl font-serif font-black mb-16 text-center uppercase">Wall of Love</h2>
         </div>
         <div className="relative w-full overflow-hidden pb-8">
           <div className="flex w-max animate-[marquee_40s_linear_infinite] hover:[animation-play-state:paused]">
@@ -247,14 +247,14 @@ export function LandingPage({ onLaunch }: { onLaunch: () => void }) {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-[var(--color-soft-clay)] border-t-4 border-[var(--color-deep-ink)]">
+      <section className="py-24 px-6 bg-[var(--color-soft-clay)] border-t-4 border-[var(--color-deep-ink)]">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black mb-12 text-center uppercase">FAQs</h2>
+          <h2 className="text-5xl font-serif font-black mb-12 text-center uppercase">FAQs</h2>
           <div className="space-y-4">
             {faqs.map((faq, i) => (
               <div key={i} className="bg-[var(--color-crisp-page)] border-4 border-[var(--color-deep-ink)] shadow-[4px_4px_0px_0px_var(--color-deep-ink)] overflow-hidden">
                 <button 
-                  className="w-full p-4 sm:p-6 text-left flex justify-between items-center font-bold text-base sm:text-lg md:text-xl hover:bg-[var(--color-whisper-white)] transition-colors gap-4"
+                  className="w-full p-6 text-left flex justify-between items-center font-bold text-xl hover:bg-[var(--color-whisper-white)] transition-colors"
                   onClick={() => setActiveFaq(activeFaq === i ? null : i)}
                 >
                   {faq.question}
