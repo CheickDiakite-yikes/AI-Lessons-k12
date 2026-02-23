@@ -1,25 +1,47 @@
-# LessonCraft (AI Lesson Planner)
+# LessonCraft - AI Lesson Planner
 
-A beautifully designed K-12 lesson planner for teachers, powered by AI. LessonCraft empowers educators with AI-driven, highly differentiated lesson planning. Craft lessons, not stress.
+```
+  ╔══════════════════════════════════════════════════════════════╗
+  ║                                                              ║
+  ║      ██╗     ███████╗███████╗███████╗ ██████╗ ███╗   ██╗     ║
+  ║      ██║     ██╔════╝██╔════╝██╔════╝██╔═══██╗████╗  ██║     ║
+  ║      ██║     █████╗  ███████╗███████╗██║   ██║██╔██╗ ██║     ║
+  ║      ██║     ██╔══╝  ╚════██║╚════██║██║   ██║██║╚██╗██║     ║
+  ║      ███████╗███████╗███████║███████║╚██████╔╝██║ ╚████║     ║
+  ║      ╚══════╝╚══════╝╚══════╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝     ║
+  ║                                                              ║
+  ║        ██████╗██████╗  █████╗ ███████╗████████╗              ║
+  ║       ██╔════╝██╔══██╗██╔══██╗██╔════╝╚══██╔══╝              ║
+  ║       ██║     ██████╔╝███████║█████╗     ██║                 ║
+  ║       ██║     ██╔══██╗██╔══██║██╔══╝     ██║                 ║
+  ║       ╚██████╗██║  ██║██║  ██║██║        ██║                 ║
+  ║        ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝        ╚═╝                 ║
+  ║                                                              ║
+  ║          Craft Lessons. Not Stress.                           ║
+  ║          AI-Powered K-12 Lesson Planning                     ║
+  ║                                                              ║
+  ╚══════════════════════════════════════════════════════════════╝
+```
 
-## Features
+## Overview
 
-- **AI-Powered Lesson Generation:** Quickly generate comprehensive lesson plans tailored to specific grade levels, subjects, and topics.
-- **Differentiation:** Automatically create differentiated materials and strategies for various learning needs.
-- **User Authentication:** Secure login and sign-up using Google Authentication or Email/Password, powered by Firebase.
-- **Role-Based Access:** Support for different user roles (Teacher, Admin, Student).
-- **Modern UI/UX:** A clean, responsive, and accessible user interface built with Tailwind CSS and Framer Motion.
-- **Real-time Database:** Stores user profiles and lesson plans securely using Cloud Firestore.
+LessonCraft is a production-grade K-12 lesson planning web application for teachers, powered by Google Gemini AI. It enables teachers to create differentiated, standards-aligned lesson plans ranging from a single class period to a full semester. The application features class roster management with individual student learning profiles, customizable worksheets (6 types), AI-generated presentation slide images, a visual lesson calendar, and PDF export. Built for Massachusetts DESE standards with K-6 elementary focus.
+
+---
 
 ## Tech Stack
 
 - **Framework:** [Next.js 15+](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Animations:** [Framer Motion](https://www.framer.com/motion/)
-- **Authentication & Database:** [Firebase](https://firebase.google.com/) (Auth & Firestore)
-- **Icons:** [Lucide React](https://lucide.dev/)
+- **Database:** [PostgreSQL](https://www.postgresql.org/) (Neon-backed) via [Drizzle ORM](https://orm.drizzle.team/)
+- **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Google OAuth & Email/Password)
+- **Storage:** [Replit Object Storage](https://docs.replit.com/storage/object-storage)
 - **AI Integration:** Google Gemini API (via `@google/genai`)
+- **Animations:** [Motion](https://www.framer.com/motion/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+
+---
 
 ## Getting Started
 
@@ -27,62 +49,48 @@ A beautifully designed K-12 lesson planner for teachers, powered by AI. LessonCr
 
 - Node.js (v18 or higher)
 - npm or yarn
-- A Firebase project
-- A Google Gemini API key
-
-### Environment Variables
-
-Create a `.env.local` file in the root directory and add the following variables:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-# Optional: comma-separated model priority for lesson generation
-# Defaults to: gemini-3.0-flash,gemini-3-flash-preview,gemini-2.5-flash
-GEMINI_LESSON_MODEL=gemini-3.0-flash
-```
-
-Make sure your `firebase-applet-config.json` is properly configured with your Firebase project details.
+- A PostgreSQL database (DATABASE_URL)
+- A Google Gemini API key (GEMINI_API_KEY)
+- Google OAuth credentials (for Google login)
 
 ### Installation
 
-1. Clone the repository or download the source code.
-2. Install the dependencies:
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Sync the database schema:
+   ```bash
+   npx drizzle-kit push
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm install
+---
+
+## Environment Variables
+
+Create a `.env` or use Replit Secrets for the following:
+
+```env
+DATABASE_URL=postgres://...
+NEXTAUTH_SECRET=your_secret
+NEXTAUTH_URL=your_app_url
+GOOGLE_CLIENT_ID=your_id
+GOOGLE_CLIENT_SECRET=your_secret
+GEMINI_API_KEY=your_key
 ```
 
-3. Start the development server:
+---
 
-```bash
-npm run dev
-```
+## Technical Architecture
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+Detailed technical documentation, including API contracts, database schema, and AI pipeline details, can be found in [replit.md](./replit.md).
 
-## Project Structure
-
-- `/app`: Next.js App Router pages and layouts.
-- `/components`: Reusable React components (UI elements, layout components, etc.).
-- `/lib`: Utility functions and Firebase configuration (`firebase.ts`).
-- `/hooks`: Custom React hooks.
-- `firebase-blueprint.json`: Defines the Firestore data schema (IR).
-- `firestore.rules`: Firebase Security Rules for Firestore.
-
-## Authentication Setup
-
-This project uses Firebase Authentication. To enable it:
-
-1. Go to your Firebase Console.
-2. Navigate to **Authentication** > **Sign-in method**.
-3. Enable **Email/Password** and **Google** providers.
-4. Navigate to **Authentication** > **Settings** > **Authorized domains** and add every hostname you use for development and production.
-5. If you are developing on Replit, add your current `*.replit.dev` host (exact hostname, no wildcard support).
-6. Ensure your Firestore rules are deployed using the provided `firestore.rules` file.
-
-## Security Rules
-
-The application uses strict Firebase Security Rules to ensure data privacy and integrity. Only authenticated users can access their own data, and role-based access control is implemented to prevent unauthorized privilege escalation.
+---
 
 ## License
 
