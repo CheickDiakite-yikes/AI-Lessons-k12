@@ -40,6 +40,104 @@ function getLessonDayCount(planLength: string): number {
   return 1;
 }
 
+function buildPedagogicalFramework(dayCount: number): string {
+  if (dayCount <= 5) {
+    const guidedEnd = Math.max(2, dayCount - 2);
+    const guidedRange = guidedEnd > 2 ? `Days 2-${guidedEnd}` : 'Day 2';
+    return `
+- Pedagogical Arc (follow this progression across all ${dayCount} days):
+  - Day 1: **Introduce & Activate** (Bloom's: Remember/Understand) — Activate prior knowledge, introduce core vocabulary, model key concepts. Heavy teacher modeling.
+  - ${guidedRange}: **Guided Practice & Explore** (Bloom's: Understand/Apply) — Guided practice with gradual release. Students work with teacher support, then in pairs/groups. Each day builds directly on the prior day's skill.
+  - Day ${dayCount - 1}: **Independent Practice & Apply** (Bloom's: Apply/Analyze) — Students demonstrate skills independently. Deepen understanding through application tasks.
+  - Day ${dayCount}: **Assess & Reflect** (Bloom's: Evaluate/Create) — Summative check or culminating project. Students reflect on learning and show mastery.
+- Spiral Review: Starting from Day 3, each day must open with a 3-5 minute warm-up that reviews a concept from a previous day.
+- Vocabulary Threading: Introduce 3-5 new terms on Day 1, add 2-3 new terms each subsequent day, and review prior terms daily. By the final day, students should have a cumulative word wall of all unit vocabulary.`;
+  }
+
+  if (dayCount <= 20) {
+    const weeksCount = Math.ceil(dayCount / 5);
+    const phases: string[] = [];
+    for (let w = 1; w <= weeksCount; w++) {
+      const startDay = (w - 1) * 5 + 1;
+      const endDay = Math.min(w * 5, dayCount);
+      if (w === 1) {
+        phases.push(`  - **Phase ${w} (Days ${startDay}-${endDay}): Foundation & Introduction** — Introduce core concepts, build vocabulary, activate prior knowledge. Bloom's focus: Remember/Understand.`);
+      } else if (w === weeksCount) {
+        phases.push(`  - **Phase ${w} (Days ${startDay}-${endDay}): Mastery & Assessment** — Independent application, culminating project or assessment, reflection. Bloom's focus: Evaluate/Create.`);
+      } else if (w <= Math.ceil(weeksCount / 2)) {
+        phases.push(`  - **Phase ${w} (Days ${startDay}-${endDay}): Guided Practice & Skill Building** — Deepen understanding through guided practice, collaborative work, and scaffolded tasks. Bloom's focus: Understand/Apply.`);
+      } else {
+        phases.push(`  - **Phase ${w} (Days ${startDay}-${endDay}): Application & Analysis** — Apply skills to new contexts, analyze patterns, work more independently. Bloom's focus: Apply/Analyze.`);
+      }
+    }
+    return `
+- Pedagogical Phasing (organize the ${dayCount} days into ${weeksCount} weekly phases):
+${phases.join('\n')}
+- Within Each Phase:
+  - Day 1 of each phase: Introduce new sub-topic or skill. Connect to prior phase.
+  - Days 2-3: Guided and collaborative practice with gradual release of responsibility.
+  - Day 4: Independent practice or application task.
+  - Day 5: Review/formative assessment day — quick quiz, peer assessment, or portfolio check.
+- Spiral Review: Every day must begin with a **Connection to Prior Learning** warm-up (3-5 min) that references a concept from a previous day or phase. Every 5th day is a dedicated review and formative check day.
+- Vocabulary Threading: Introduce 4-6 key terms per phase. Each day's warm-up should include 1-2 vocabulary review items. Maintain a cumulative vocabulary list that grows across phases.
+- Skill Progression: Each day's objective must explicitly build on the prior day. Use language like "Building on yesterday's work with X, today students will Y."`;
+  }
+
+  const unitCount = dayCount <= 45 ? Math.ceil(dayCount / 10) : Math.ceil(dayCount / 15);
+  const daysPerUnit = Math.ceil(dayCount / unitCount);
+  const units: string[] = [];
+  for (let u = 1; u <= unitCount; u++) {
+    const startDay = (u - 1) * daysPerUnit + 1;
+    const endDay = Math.min(u * daysPerUnit, dayCount);
+    units.push(`  - **Unit ${u} (Days ${startDay}-${endDay}):** [Thematic Sub-Unit Title] — Each unit follows its own introduce → practice → apply → assess arc.`);
+  }
+  const guidedStart = 3;
+  const guidedEnd = Math.max(guidedStart, Math.floor(daysPerUnit * 0.6));
+  const applyStart = guidedEnd + 1;
+  const applyEnd = Math.max(applyStart, daysPerUnit - 1);
+  return `
+- Long-Range Curriculum Structure (organize the ${dayCount} days into ${unitCount} thematic sub-units):
+${units.join('\n')}
+- Each Sub-Unit Must Include (day numbers are relative within the sub-unit):
+  - Days 1-2: Introduction and foundational skill building (Bloom's: Remember/Understand).
+  - Days ${guidedStart}-${guidedEnd}: Guided practice, collaborative tasks, deepening understanding (Bloom's: Understand/Apply).
+  - Days ${applyStart}-${applyEnd}: Independent application and analysis (Bloom's: Apply/Analyze).
+  - Final day of each sub-unit: Assessment day — formative or summative check, student reflection, and preview of next unit.
+- Cross-Unit Progression:
+  - Each sub-unit builds on the skills and knowledge from the previous one.
+  - The first day of each new sub-unit must include a **Bridge Activity** connecting the previous unit's content to the new topic.
+  - Final sub-unit should be a culminating review and mastery demonstration.
+- Spiral Review: Every 5th day must include a structured review activity covering concepts from earlier days/units. Use varied review formats (games, partner quizzes, sorting activities, quick writes).
+- Vocabulary Threading: Introduce 5-8 key terms per sub-unit. Maintain a cumulative vocabulary tracker. Each day's warm-up must revisit 2-3 prior vocabulary words. By the end, students should have mastered all vocabulary across all sub-units.
+- Skill Progression: Follow Bloom's taxonomy across the full plan — early units emphasize remembering and understanding, middle units focus on applying and analyzing, final units push toward evaluating and creating.
+- Assessment Rhythm: Quick formative checks every 3-5 days. Sub-unit summative assessment at the end of each sub-unit. Cumulative mid-point assessment halfway through the plan.`;
+}
+
+function buildScopeSequenceInstructions(dayCount: number): string {
+  if (dayCount <= 5) {
+    return `- Scope and Sequence:
+  - Provide exactly ${dayCount} numbered entries (Day 1 through Day ${dayCount}).
+  - For each entry include: **Bloom's Level** (Remember/Understand/Apply/Analyze/Evaluate/Create), **focus skill**, **daily objective**, **how it builds on the previous day**, and **assessment idea**.
+  - Show a clear progression from introduction (Day 1) through mastery/assessment (Day ${dayCount}).`;
+  }
+
+  if (dayCount <= 20) {
+    const weeksCount = Math.ceil(dayCount / 5);
+    return `- Scope and Sequence:
+  - Organize into ${weeksCount} weekly phases. For each phase, provide a **Phase Title** and **Phase Goal**.
+  - Within each phase, list each day with: **Bloom's Level**, **focus skill**, **daily objective**, **connection to prior day**, and **assessment idea**.
+  - Mark every 5th day as a **Review & Check** day.
+  - Show clear skill escalation across phases — each phase should tackle higher-order thinking than the last.`;
+  }
+
+  const unitCount = dayCount <= 45 ? Math.ceil(dayCount / 10) : Math.ceil(dayCount / 15);
+  return `- Scope and Sequence:
+  - Organize into ${unitCount} thematic sub-units. For each sub-unit, provide a **Unit Title**, **Unit Essential Question**, and **Unit Goal**.
+  - Within each sub-unit, list each day with: **Bloom's Level**, **focus skill**, **daily objective**, **connection to prior day**, and **assessment type**.
+  - Mark assessment days, review days, and bridge/transition days explicitly.
+  - Show how sub-units connect and build toward a culminating outcome by the final days.`;
+}
+
 function getGeminiApiKey(): string {
   const key =
     process.env.GEMINI_API_KEY ||
@@ -336,12 +434,16 @@ ${selectedTypes.map((type, i) => `      - ${WORKSHEET_TYPES[type] || `### Worksh
     - Do NOT include visual prompts in the slides - just the title and bullet points.
 `
     : '';
+  const pedagogicalFramework = buildPedagogicalFramework(lessonDayCount);
+  const scopeSequenceInstructions = buildScopeSequenceInstructions(lessonDayCount);
+
   const sectionStructure = isMultiDayPlan
     ? `
 1) Use this exact major section structure:
 - # [Creative Unit Title]
 - ## Unit Overview
 - ## Unit Goals and Standards
+- ## Curriculum Progression Framework
 - ## Scope and Sequence
 - Then include exactly ${lessonDayCount} day sections, each with this exact day heading pattern:
   - ## Day X: [Daily Lesson Title]
@@ -353,39 +455,62 @@ ${includeWorksheets || includeSlides ? '- ## Optional Generated Add-ons' : ''}
   - Grade Level and Subject
   - Duration per lesson
   - Brief unit snapshot (2-3 sentences)
+  - **Unit Arc:** One sentence describing the learning journey from Day 1 to Day ${lessonDayCount} (e.g., "Students progress from basic identification of X to independently analyzing and creating Y.")
 
 - Unit Goals and Standards:
   - Learning Objectives:
-    - 4-6 unit-level measurable objectives.
+    - 4-6 unit-level measurable objectives arranged in order of complexity (lower-order to higher-order thinking).
   - Relevant Standards (Massachusetts DESE):
     - Include 2-4 standards with code and full description text when possible.
     - Prefer official MA codes (for example: MA.3.MD.A.1).
     - If exact official text is uncertain, write "Verify official DESE wording" after that standard.
   - Key Questions:
-    - 3-5 essential questions that span the unit.
+    - 3-5 essential questions that span the unit and grow in depth.
+  - Cumulative Vocabulary List:
+    - List ALL key vocabulary for the entire unit, organized by the day they are introduced.
+    - Format: **Day X:** term1, term2, term3
 
-- Scope and Sequence:
-  - Provide exactly ${lessonDayCount} numbered entries (Day 1 through Day ${lessonDayCount}).
-  - For each entry include: focus skill, objective, and quick assessment idea.
+- Curriculum Progression Framework:
+${pedagogicalFramework}
+
+${scopeSequenceInstructions}
 
 - Each day section (## Day X: ...):
+  - ### Connection to Prior Learning
+    - For Day 1: Brief activating prior knowledge activity (what students already know about this topic).
+    - For Day 2+: A specific 3-5 minute warm-up that directly references what was learned the previous day. Use language like "Yesterday we learned X. Today we build on that by Y."
+    - ${lessonDayCount >= 10 ? 'Every 5th day: Include a **Spiral Review** activity (5-7 min) that revisits concepts from earlier in the unit, not just the previous day.' : 'On the final day: Include a brief cumulative review of all prior days.'}
   - ### Core Lesson Details
+    - **Bloom's Level:** State the primary Bloom's taxonomy level for this day (Remember/Understand/Apply/Analyze/Evaluate/Create).
     - Daily objective(s) and success criteria.
+    - **Builds On:** One sentence explaining how this day's learning connects to and advances from the previous day.
   - ### Preparation and Materials
     - Practical materials list and setup notes.
+    - **Vocabulary Focus:** List new terms introduced today AND 2-3 review terms from prior days.
   - ### Instruction and Activities
     - Step-by-step flow with **[X min]** timing.
     - Include teacher moves and expected student actions.
-    - Include one extension for early finishers.
+    - Activities should increase in cognitive demand compared to the previous day.
+    - Include one extension for early finishers that previews or connects to the next day's content.
     - Keep each day concise and classroom-ready.
   - ### Evaluation and Support
     - In-lesson formative check and end-of-lesson check.
+    - **Exit Ticket:** A quick check question or task that assesses the day's specific objective.
     - Differentiation:
 ${hasRoster ? '      - Hyper-personalize by named students from the roster and provide actionable modifications per student.' : '      - Provide actionable differentiation by WIDA levels and by academic level.'}
+    - **Preview:** One sentence teasing what comes next: "Tomorrow, we will build on today's work by..."
 ${includeWorksheets ? '  - Include the daily worksheet block for that day in the same day section using the exact worksheet heading format above.' : ''}
 
 ${includeWorksheets || includeSlides ? `- Optional Generated Add-ons:
 ${worksheetGuidance}${slidesGuidance}` : ''}
+
+CRITICAL COHESION RULES (multi-day plans):
+- Each day MUST explicitly reference and build upon the previous day's content. No day should feel like a standalone lesson.
+- Skills must escalate in complexity across days following Bloom's taxonomy. Do NOT repeat the same cognitive level across consecutive days without justification.
+- Vocabulary must accumulate — never drop previously introduced terms. Each day's activities should use both new and prior vocabulary.
+- Assessment tasks must reflect the cumulative learning, not just isolated daily objectives.
+- For plans longer than 1 week, include designated review/assessment checkpoint days as specified in the Curriculum Progression Framework.
+- The final day must be a culminating experience that synthesizes ALL prior learning, not just the most recent day's content.
 `
     : `
 1) Use this exact major section structure:
@@ -457,7 +582,7 @@ Context:
 ${!params.autoGenerate && params.manualObjectives ? `- Teacher-provided Objectives/Topics (IMPORTANT — you MUST base the entire lesson around these specific objectives and topics): ${params.manualObjectives}` : ''}
 - Include Worksheet Add-ons: ${includeWorksheets ? 'Yes' : 'No'}
 - Include Slide Add-ons: ${includeSlides ? 'Yes' : 'No'}
-${isMultiDayPlan ? `- This is a multi-day unit. You must produce exactly ${lessonDayCount} daily lesson sections.` : '- This is a single-day lesson.'}
+${isMultiDayPlan ? `- This is a multi-day unit. You must produce exactly ${lessonDayCount} daily lesson sections.\n- CRITICAL: Each day must build on and explicitly reference the previous day's learning. This is a cohesive unit, NOT ${lessonDayCount} independent lessons.` : '- This is a single-day lesson.'}
 ${params.studentsContext ? `- Class Roster Context (use names for personalization):\n${params.studentsContext}` : ''}
 
 Formatting rules (strict):
