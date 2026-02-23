@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Crimson_Text, Fira_Code } from 'next/font/google';
 import './globals.css';
 
@@ -106,6 +106,14 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-title': siteName,
     'mobile-web-app-capable': 'yes',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
