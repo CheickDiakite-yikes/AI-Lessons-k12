@@ -108,3 +108,4 @@ drizzle.config.ts             - Drizzle Kit configuration
 - Integrated Replit Object Storage for lesson images and profile pictures
 - **Functional lesson calendar**: LessonCalendar component shows saved plans on a Mon-Fri school-day grid with month/week toggle, color-coded by subject (ELA, Math, Science, etc.), multi-day plans span consecutive weekdays based on planLength, clickable days load the plan at the correct day index
 - **Start date picker**: Added start_date field (varchar YYYY-MM-DD) to lesson_plans schema, date picker in input form, auto-saved on create/update
+- **Worksheet type multi-select**: Replaced single "Include Worksheets" toggle with a 2-column grid of 6 worksheet types (Matching, Fill in the Blank, Multiple Choice, Short Answer, True or False, Sorting/Categorizing). Teachers select up to 4 types. AI prompt includes strict formatting templates per type. Backwards compatible with old saved plans.
