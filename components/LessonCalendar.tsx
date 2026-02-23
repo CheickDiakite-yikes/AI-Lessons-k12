@@ -211,33 +211,41 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
     return (
       <div
         key={key}
-        className={`${isWeekView ? 'min-h-[120px]' : 'aspect-square'} border-2 p-1 md:p-1.5 relative flex flex-col ${
+        className={`${isWeekView ? 'min-h-[80px] sm:min-h-[120px]' : 'aspect-square'} border-2 p-1 md:p-1.5 relative flex flex-col group transition-all h-full ${
           events.length > 0
-            ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)]'
+            ? 'bg-[var(--color-soft-clay)] border-[var(--color-deep-ink)] shadow-[inset_2px_2px_0px_rgba(0,0,0,0.05)]'
             : isToday
               ? 'bg-blue-50 border-blue-300'
               : 'bg-[var(--color-whisper-white)] border-[var(--color-concrete-light)]'
         }`}
       >
-        <span className={`text-xs font-mono ${isToday ? 'font-bold text-blue-600' : 'text-[var(--color-charcoal-grey)]'}`}>
+        <span className={`text-[10px] sm:text-xs font-mono mb-auto ${isToday ? 'font-bold text-blue-600' : 'text-[var(--color-charcoal-grey)]'}`}>
           {date.getDate()}
         </span>
-        <div className="flex-1 flex flex-col justify-end gap-0.5 mt-0.5 overflow-hidden">
-          {events.map((event, i) => (
+        <div className="flex flex-col gap-0.5 mt-0.5 overflow-hidden w-full">
+          {events.slice(0, isWeekView ? 4 : 2).map((event, i) => (
             <button
               key={`${event.planId}-${i}`}
               type="button"
               onClick={() => onPlanClick(event.planId, event.dayNumber - 1)}
-              className={`${getSubjectColor(event.subject)} text-[9px] md:text-[10px] font-bold px-1 py-0.5 truncate border border-[var(--color-deep-ink)] text-left hover:brightness-110 transition-all cursor-pointer`}
+              className={`${getSubjectColor(event.subject)} text-[8px] sm:text-[9px] md:text-[10px] font-bold px-1 py-0.5 truncate border border-[var(--color-deep-ink)] text-left hover:brightness-110 transition-all cursor-pointer w-full shadow-[1px_1px_0px_0px_rgba(0,0,0,0.2)]`}
               title={`${event.title} – Day ${event.dayNumber}/${event.totalDays}`}
             >
               {isWeekView ? (
-                <span>{event.title} <span className="opacity-70">D{event.dayNumber}</span></span>
+                <span className="flex justify-between items-center gap-1">
+                  <span className="truncate">{event.title}</span>
+                  <span className="opacity-80 flex-shrink-0 font-mono text-[7px]">D{event.dayNumber}</span>
+                </span>
               ) : (
-                <span>{event.subject || event.title.slice(0, 8)}</span>
+                <span className="block truncate">{event.subject || event.title.slice(0, 8)}</span>
               )}
             </button>
           ))}
+          {events.length > (isWeekView ? 4 : 2) && (
+            <div className="text-[7px] font-bold text-center text-[var(--color-charcoal-grey)] leading-none mt-auto">
+              +{events.length - (isWeekView ? 4 : 2)} more
+            </div>
+          )}
         </div>
       </div>
     );
@@ -283,33 +291,33 @@ export default function LessonCalendar({ savedPlans, onPlanClick }: Props) {
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-1 md:gap-2">
+      <div className="grid grid-cols-5 gap-1 md:gap-2 auto-rows-fr">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
-          <div key={day} className="text-center font-bold text-xs md:text-sm text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-1 md:pb-2">{day}</div>
+          <div key={day} className="text-center font-bold text-[10px] xs:text-xs md:text-sm text-[var(--color-deep-ink)] border-b-2 border-[var(--color-deep-ink)] pb-1 md:pb-2 uppercase tracking-tighter sm:tracking-normal">{day}</div>
         ))}
 
         {viewMode === 'month' ? (
           monthDays.flatMap((week, wi) =>
             week.map((date, di) => (
-              <div key={`${wi}-${di}`}>
+              <div key={`${wi}-${di}`} className="h-full">
                 {renderDayCell(date, false)}
               </div>
             ))
           )
         ) : (
           weekDays.map((date) => (
-            <div key={dateKey(date)}>
+            <div key={dateKey(date)} className="h-full">
               {renderDayCell(date, true)}
             </div>
           ))
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 pt-3 border-t border-[var(--color-concrete-light)] flex flex-wrap gap-x-3 gap-y-2 justify-center sm:justify-start">
         {Object.entries(SUBJECT_COLORS).map(([subject, color]) => (
-          <div key={subject} className="flex items-center gap-1">
-            <div className={`w-2.5 h-2.5 ${color} border border-[var(--color-deep-ink)]`} />
-            <span className="text-[10px] font-mono text-[var(--color-charcoal-grey)]">{subject}</span>
+          <div key={subject} className="flex items-center gap-1.5 whitespace-nowrap">
+            <div className={`w-3 h-3 ${color} border border-[var(--color-deep-ink)] flex-shrink-0 shadow-[1px_1px_0px_0px_var(--color-deep-ink)]`} />
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-tight text-[var(--color-charcoal-grey)]">{subject}</span>
           </div>
         ))}
       </div>
