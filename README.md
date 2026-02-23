@@ -36,6 +36,9 @@ Create a `.env.local` file in the root directory and add the following variables
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key
+# Optional: comma-separated model priority for lesson generation
+# Defaults to: gemini-3.0-flash,gemini-3-flash-preview,gemini-2.5-flash
+GEMINI_LESSON_MODEL=gemini-3.0-flash
 ```
 
 Make sure your `firebase-applet-config.json` is properly configured with your Firebase project details.

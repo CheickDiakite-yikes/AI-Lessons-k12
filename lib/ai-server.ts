@@ -35,11 +35,59 @@ function getLessonDayCount(planLength: string): number {
 }
 
 function getGeminiApiKey(): string {
-  const key = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  const key =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (!key) {
     throw new Error('Gemini API key is not configured on the server.');
   }
   return key;
+}
+
+const DEFAULT_LESSON_MODEL_CANDIDATES = [
+  'gemini-3.0-flash',
+  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
+];
+
+function parseModelList(value: string): string[] {
+  return Array.from(
+    new Set(
+      value
+        .split(',')
+        .map((model) => model.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function getLessonModelCandidates(): string[] {
+  const configured =
+    process.env.GEMINI_LESSON_MODEL || process.env.GEMINI_TEXT_MODEL || process.env.GEMINI_MODEL;
+
+  if (configured && configured.trim()) {
+    const parsed = parseModelList(configured);
+    if (parsed.length > 0) return parsed;
+  }
+
+  return DEFAULT_LESSON_MODEL_CANDIDATES;
+}
+
+function shouldRetryWithDifferentModel(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+  if (!message) return false;
+
+  return (
+    message.includes('model') ||
+    message.includes('not found') ||
+    message.includes('unsupported') ||
+    message.includes('permission') ||
+    message.includes('access denied') ||
+    message.includes('403') ||
+    message.includes('404')
+  );
 }
 
 export async function generateLessonPlanServer(params: LessonPlanParams) {
@@ -266,13 +314,40 @@ ${sectionStructure}
 <IMAGE_PROMPT>...</IMAGE_PROMPT>
   `;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-    config: {
-      temperature: 0.45,
-    },
-  });
+  const generateWithModel = async (model: string) =>
+    ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        temperature: 0.45,
+      },
+    });
+
+  const modelCandidates = getLessonModelCandidates();
+  let response: Awaited<ReturnType<typeof generateWithModel>> | null = null;
+  let lastError: unknown;
+
+  for (const model of modelCandidates) {
+    try {
+      response = await generateWithModel(model);
+      break;
+    } catch (error) {
+      lastError = error;
+      const hasNextModel = model !== modelCandidates[modelCandidates.length - 1];
+      if (hasNextModel && shouldRetryWithDifferentModel(error)) {
+        console.warn(`Lesson model "${model}" failed. Trying the next configured model.`);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (!response) {
+    if (lastError instanceof Error) {
+      throw lastError;
+    }
+    throw new Error('Failed to generate lesson plan.');
+  }
 
   const text = response.text || '';
   let imagePrompt: string | null = null;
