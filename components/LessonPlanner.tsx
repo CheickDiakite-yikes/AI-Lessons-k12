@@ -17,6 +17,7 @@ const SUBJECTS = ['ELA', 'Math', 'Science', 'Social Studies'];
 const ENGLISH_PROFICIENCY = ['Entering', 'Emerging', 'Developing', 'Expanding', 'Bridging'];
 const ACADEMIC_LEVELS = ['Below Grade', 'At Grade', 'Above Grade'];
 const ACADEMIC_LEVELS_EXTENDED = ['Significantly Below Grade', 'Below Grade', 'At Grade', 'Above Grade', 'Significantly Above Grade'];
+const WORKSHEET_TYPES = ['Matching', 'Fill in the Blank', 'Multiple Choice', 'Short Answer', 'True or False', 'Sorting / Categorizing'];
 const LEARNING_PREFERENCES = ['Visual', 'Auditory', 'Kinesthetic', 'Reading/Writing', 'Needs 1v1', 'Direction-oriented'];
 
 type Student = {
@@ -335,7 +336,7 @@ export function LessonPlanner() {
   const [academicLevels, setAcademicLevels] = useState<string[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(true);
   const [manualObjectives, setManualObjectives] = useState('');
-  const [includeWorksheets, setIncludeWorksheets] = useState(false);
+  const [worksheetTypes, setWorksheetTypes] = useState<string[]>([]);
   const [includeSlides, setIncludeSlides] = useState(false);
   const [isInputPanelOpen, setIsInputPanelOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -530,7 +531,7 @@ export function LessonPlanner() {
       { label: 'Building differentiation strategies', icon: '🎯' },
       { label: 'Writing lesson content', icon: '📝' },
     ];
-    if (includeWorksheets) steps.push({ label: 'Creating worksheets', icon: '📋' });
+    if (worksheetTypes.length > 0) steps.push({ label: 'Creating worksheets', icon: '📋' });
     if (includeSlides) steps.push({ label: 'Preparing slide outlines', icon: '🎨' });
     steps.push({ label: 'Generating hero illustration', icon: '🖼️' });
     if (includeSlides) steps.push({ label: 'Designing presentation slides', icon: '✨' });
@@ -560,7 +561,7 @@ export function LessonPlanner() {
     const advancePhase = () => { phaseIndex++; setGenerationPhase(phaseIndex); };
     if (phaseTimerRef.current) clearInterval(phaseTimerRef.current);
     phaseTimerRef.current = setInterval(() => {
-      const maxBeforePlan = includeWorksheets && includeSlides ? 5 : includeWorksheets || includeSlides ? 4 : 3;
+      const maxBeforePlan = worksheetTypes.length > 0 && includeSlides ? 5 : worksheetTypes.length > 0 || includeSlides ? 4 : 3;
       if (phaseIndex < maxBeforePlan) {
         advancePhase();
       }
@@ -586,7 +587,7 @@ export function LessonPlanner() {
         academicLevels,
         autoGenerate,
         manualObjectives,
-        includeWorksheets,
+        worksheetTypes,
         includeSlides,
         studentsContext
       });
@@ -695,7 +696,7 @@ Design requirements:
           duration,
           startDate,
           classRosterId: selectedClassId || undefined,
-          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: persistedSlideImageKeys },
+          parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, worksheetTypes, includeSlides, slideImageKeys: persistedSlideImageKeys },
         });
         setCurrentPlanId(saved.id);
         setSavedPlans(prev => [saved, ...prev]);
@@ -837,13 +838,21 @@ Design requirements:
         duration,
         startDate,
         classRosterId: selectedClassId || null,
-        parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, includeWorksheets, includeSlides, slideImageKeys: slideImageKeys },
+        parameters: { englishProficiency, academicLevels, autoGenerate, manualObjectives, worksheetTypes, includeSlides, slideImageKeys: slideImageKeys },
       });
       triggerConfetti();
     } catch (error) {
       console.error('Failed to save lesson plan:', error);
     }
     setIsMobileMenuOpen(false);
+  };
+
+  const toggleWorksheetType = (type: string) => {
+    setWorksheetTypes(prev => {
+      if (prev.includes(type)) return prev.filter(t => t !== type);
+      if (prev.length >= 4) return prev;
+      return [...prev, type];
+    });
   };
 
   const toggleMultiSelect = (item: string, state: string[], setState: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -1359,7 +1368,11 @@ Design requirements:
                           if (plan.parameters && typeof plan.parameters === 'object') {
                             const params = plan.parameters as Record<string, unknown>;
                             if (params.includeSlides !== undefined) setIncludeSlides(Boolean(params.includeSlides));
-                            if (params.includeWorksheets !== undefined) setIncludeWorksheets(Boolean(params.includeWorksheets));
+                            if (params.worksheetTypes && Array.isArray(params.worksheetTypes)) {
+                              setWorksheetTypes(params.worksheetTypes);
+                            } else if (params.includeWorksheets) {
+                              setWorksheetTypes(['Matching', 'Fill in the Blank', 'Multiple Choice']);
+                            }
                           }
                           setCurrentView('planner');
                           setIsInputPanelOpen(false);
@@ -1634,17 +1647,29 @@ Design requirements:
               <p className="text-xs text-[var(--color-charcoal-grey)] mt-1">Generate extra teacher-ready assets with your lesson.</p>
             </div>
 
-            <label className="flex items-center justify-between gap-3">
-              <span className="font-bold text-sm text-[var(--color-deep-ink)]">Include Worksheets</span>
-              <button
-                type="button"
-                onClick={() => setIncludeWorksheets(!includeWorksheets)}
-                className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${includeWorksheets ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
-                aria-label="Toggle worksheets add-on"
-              >
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${includeWorksheets ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
-              </button>
-            </label>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-sm text-[var(--color-deep-ink)]">Worksheet Types</span>
+                <span className="text-[10px] font-mono text-[var(--color-charcoal-grey)]">{worksheetTypes.length}/4 selected</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {WORKSHEET_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleWorksheetType(type)}
+                    disabled={!worksheetTypes.includes(type) && worksheetTypes.length >= 4}
+                    className={`px-3 py-2 border-2 border-[var(--color-deep-ink)] text-xs font-bold transition-all text-left ${
+                      worksheetTypes.includes(type)
+                        ? 'bg-[var(--color-sage-green)] text-white shadow-[2px_2px_0px_0px_var(--color-deep-ink)] translate-y-[-1px] translate-x-[-1px]'
+                        : 'bg-[var(--color-crisp-page)] text-[var(--color-deep-ink)] hover:bg-[var(--color-soft-clay)] disabled:opacity-40 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {type} {worksheetTypes.includes(type) && '✓'}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <label className="flex items-center justify-between gap-3">
               <span className="font-bold text-sm text-[var(--color-deep-ink)]">Include Slide Outline</span>

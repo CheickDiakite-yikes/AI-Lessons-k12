@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       academicLevels,
       autoGenerate,
       manualObjectives,
-      includeWorksheets,
+      worksheetTypes,
       includeSlides,
       studentsContext,
     } = body;
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       academicLevels: Array.isArray(academicLevels) ? academicLevels : [],
       autoGenerate: Boolean(autoGenerate),
       manualObjectives: typeof manualObjectives === 'string' ? manualObjectives : '',
-      includeWorksheets: Boolean(includeWorksheets),
+      worksheetTypes: Array.isArray(worksheetTypes) ? worksheetTypes : [],
       includeSlides: Boolean(includeSlides),
       studentsContext: typeof studentsContext === 'string' ? studentsContext : undefined,
     });

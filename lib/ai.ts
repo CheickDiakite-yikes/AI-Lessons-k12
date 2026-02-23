@@ -7,7 +7,7 @@ type LessonPlanParams = {
   academicLevels: string[];
   autoGenerate: boolean;
   manualObjectives: string;
-  includeWorksheets: boolean;
+  worksheetTypes: string[];
   includeSlides: boolean;
   studentsContext?: string;
 };

@@ -10,7 +10,7 @@ type LessonPlanParams = {
   academicLevels: string[];
   autoGenerate: boolean;
   manualObjectives: string;
-  includeWorksheets: boolean;
+  worksheetTypes: string[];
   includeSlides: boolean;
   studentsContext?: string;
 };
@@ -227,15 +227,65 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
   const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
 
   const hasRoster = Boolean(params.studentsContext);
-  const includeWorksheets = params.includeWorksheets;
+  const includeWorksheets = params.worksheetTypes.length > 0;
   const includeSlides = params.includeSlides;
   const lessonDayCount = getLessonDayCount(params.planLength);
   const isMultiDayPlan = lessonDayCount > 1;
-  const worksheetGuidance = includeWorksheets
-    ? isMultiDayPlan
+
+  const WORKSHEET_TYPES: Record<string, string> = {
+    'Matching': `### Worksheet: Matching
+Format rules:
+- Create a "Terms" column with 6-8 numbered items on the left
+- Create a "Definitions" column with the same number of lettered items (A, B, C, etc.) on the right, shuffled
+- Students draw lines or write the matching letter next to each number
+- Keep terms and definitions concise (one line each)`,
+
+    'Fill in the Blank': `### Worksheet: Fill in the Blank
+Format rules:
+- Include a **Word Bank** at the top with all answer words listed
+- Provide 8-10 numbered sentences
+- Each sentence has exactly one blank shown as ____________ (12+ underscores)
+- Blanks should test key vocabulary or concepts from the lesson
+- Sentences should provide enough context clues for students`,
+
+    'Multiple Choice': `### Worksheet: Multiple Choice
+Format rules:
+- Include 8-10 numbered questions
+- Each question has exactly 4 options, each on its own line as A), B), C), D)
+- Only one correct answer per question
+- Include plausible distractors that test understanding, not tricks`,
+
+    'Short Answer': `### Worksheet: Short Answer
+Format rules:
+- Include 5-6 numbered questions requiring 1-3 sentence responses
+- After each question, include 3 blank response lines: ____________
+- Questions should progress from recall to application/analysis
+- Include point values in parentheses after each question`,
+
+    'True or False': `### Worksheet: True or False
+Format rules:
+- Include 8-10 numbered statements
+- After each statement, write: **True / False**
+- For false statements, include a line: "If false, correct the statement: ____________"
+- Mix true and false statements roughly evenly
+- Statements should test key facts and common misconceptions`,
+
+    'Sorting / Categorizing': `### Worksheet: Sorting / Categorizing
+Format rules:
+- Define 2-3 category labels clearly at the top as bold headings
+- Provide 10-15 items in a mixed list below
+- Students sort each item into the correct category by writing it under the heading
+- Include blank lines under each category heading for student responses
+- Items should clearly belong to one category`,
+  };
+
+  const selectedTypes = params.worksheetTypes;
+  const worksheetGuidance = selectedTypes.length > 0
+    ? (isMultiDayPlan
       ? `- Daily Worksheets:
     - Every day section must include one worksheet using this exact heading format:
       - ### Worksheet (Day X)
+    - Rotate through these worksheet types across days: ${selectedTypes.join(', ')}
     - Each worksheet must include these exact subheadings in this order:
       - #### Student Copy
       - #### Answer Key
@@ -248,16 +298,14 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
     - Student Copy should include 6-8 questions/tasks that directly practice that day's objective.
     - Every worksheet question/task must be fully text-based and answerable on paper without external visuals.
     - NEVER use placeholders such as "(Picture of ...)", "[Insert image]", "see image", or "use the picture".
-    - If a visual would help, convert it into a clear written prompt instead.
     - Use school-ready, formal worksheet language and clear spacing between numbered items.
     - Keep question formatting simple and readable in plain markdown.
+${selectedTypes.map(type => `    - When creating a "${type}" worksheet:\n${WORKSHEET_TYPES[type]?.split('\n').slice(1).map(l => `      ${l}`).join('\n') || ''}`).join('\n')}
 `
       : `- Worksheets:
-    - Provide exactly 3 worksheet sets with these exact headings in this order:
-      - ### Worksheet 1: Matching
-      - ### Worksheet 2: Fill in the Blank
-      - ### Worksheet 3: Multiple Choice
-    - For each worksheet, include these exact subheadings in this order:
+    - Generate exactly ${selectedTypes.length} worksheet(s) using these exact types in this order:
+${selectedTypes.map((type, i) => `      - ${WORKSHEET_TYPES[type] || `### Worksheet ${i+1}: ${type}`}`).join('\n')}
+    - For EVERY worksheet, include these exact subheadings in this order:
       - #### Student Copy
       - #### Answer Key
       - #### Differentiation Note
@@ -268,22 +316,9 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
       - **Total Points:** [reasonable point total]
     - Every worksheet question/task must be fully text-based and answerable on paper without external visuals.
     - NEVER use placeholders such as "(Picture of ...)", "[Insert image]", "see image", or "use the picture".
-    - If a visual would help, convert it into a clear written prompt instead.
-    - Matching worksheet format:
-      - Include "Terms" list with 6 numbered items.
-      - Include "Definitions" list with 6 lettered items (A-F).
-    - Fill in the Blank worksheet format:
-      - Include 8-10 numbered sentences.
-      - Each sentence has exactly one blank with underscores.
-    - Multiple Choice worksheet format:
-      - Include 8-10 numbered questions.
-      - Each question includes exactly 4 options, each on its own line as A), B), C), D).
-    - Answer key format:
-      - Matching: list answers as 1-A format.
-      - Fill in the Blank: list each number with expected answer.
-      - Multiple Choice: list number + correct letter + a short rationale (max 1 sentence).
     - Use school-ready, formal worksheet language and clear spacing between numbered items.
-`
+    - Keep question formatting simple and readable in plain markdown.
+`)
     : '';
   const slidesGuidance = includeSlides
     ? `- Presentation Slides:
