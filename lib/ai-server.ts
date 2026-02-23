@@ -20,6 +20,12 @@ type SlideData = {
   bullets: string[];
 };
 
+type WorksheetBlock = {
+  startLine: number;
+  endLine: number;
+  content: string;
+};
+
 function getLessonDayCount(planLength: string): number {
   const normalized = planLength.trim().toLowerCase();
 
@@ -90,6 +96,133 @@ function shouldRetryWithDifferentModel(error: unknown): boolean {
   );
 }
 
+const WORKSHEET_PLACEHOLDER_PATTERNS: RegExp[] = [
+  /\((?:\s)*(?:picture|image|photo|illustration)\s+of[^)]*\)/i,
+  /\b(?:picture|image|photo|illustration)\s+of\b/i,
+  /\bsee\s+(?:the\s+)?(?:picture|image|diagram|chart|graphic)\b/i,
+  /\buse\s+(?:the\s+)?(?:picture|image|diagram)\b/i,
+  /\[insert[^\]]*(?:picture|image|diagram)[^\]]*\]/i,
+];
+
+function worksheetHasPlaceholder(content: string): boolean {
+  return WORKSHEET_PLACEHOLDER_PATTERNS.some((pattern) => pattern.test(content));
+}
+
+function extractWorksheetBlocks(markdown: string): WorksheetBlock[] {
+  if (!markdown.trim()) return [];
+
+  const lines = markdown.split('\n');
+  const startIndexes: number[] = [];
+
+  lines.forEach((line, index) => {
+    if (/^###\s+Worksheet\b/i.test(line.trim())) {
+      startIndexes.push(index);
+    }
+  });
+
+  return startIndexes.map((startLine) => {
+    let endLine = lines.length;
+    for (let i = startLine + 1; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (/^#{1,3}\s+/.test(trimmed)) {
+        endLine = i;
+        break;
+      }
+    }
+
+    return {
+      startLine,
+      endLine,
+      content: lines.slice(startLine, endLine).join('\n').trim(),
+    };
+  });
+}
+
+function buildWorksheetRewritePrompt(blocks: WorksheetBlock[], params: LessonPlanParams): string {
+  const serializedBlocks = blocks
+    .map(
+      (block, index) => `<WORKSHEET_BLOCK index="${index}">
+${block.content}
+</WORKSHEET_BLOCK>`,
+    )
+    .join('\n\n');
+
+  return `
+You are a K-6 worksheet quality editor.
+
+Revise the worksheet blocks below so they are teacher-usable and fully printable.
+
+Context:
+- Grade Level: ${params.gradeLevel}
+- Subject: ${params.subject}
+- Plan Length: ${params.planLength}
+- Lesson Duration: ${params.duration} minutes
+
+Hard requirements:
+- Return ONLY <WORKSHEET_BLOCK index="N">...</WORKSHEET_BLOCK> blocks for the same indices provided.
+- Keep the heading line that starts each block (### Worksheet...) unchanged.
+- Keep this exact subsection order in every block:
+  - #### Student Copy
+  - #### Answer Key
+  - #### Differentiation Note
+- Student Copy must include:
+  - Name: ____________   Date: ____________
+  - **Standard Alignment:** ...
+  - **Directions:** ...
+  - **Total Points:** ...
+- Every question/task must be answerable using text only on paper.
+- Do NOT reference pictures, images, diagrams, screenshots, or external visuals.
+- Replace placeholders like "(Picture of Apple)" with concrete text-based prompts.
+- Keep language age-appropriate but specific.
+- Keep markdown clean (no tables, no HTML, no code fences).
+
+Worksheet blocks to revise:
+${serializedBlocks}
+  `;
+}
+
+function parseRewrittenWorksheetBlocks(raw: string): Map<number, string> {
+  const rewritten = new Map<number, string>();
+  const regex = /<WORKSHEET_BLOCK\s+index="(\d+)">([\s\S]*?)<\/WORKSHEET_BLOCK>/g;
+  let match;
+
+  while ((match = regex.exec(raw)) !== null) {
+    const index = Number(match[1]);
+    const content = match[2]?.trim();
+    if (Number.isFinite(index) && content) {
+      rewritten.set(index, content);
+    }
+  }
+
+  return rewritten;
+}
+
+function applyRewrittenWorksheetBlocks(
+  originalMarkdown: string,
+  worksheetBlocks: WorksheetBlock[],
+  rewrittenByIndex: Map<number, string>,
+): string {
+  if (!worksheetBlocks.length || !rewrittenByIndex.size) return originalMarkdown;
+
+  const lines = originalMarkdown.split('\n');
+  const out: string[] = [];
+  let cursor = 0;
+
+  worksheetBlocks.forEach((block, index) => {
+    out.push(...lines.slice(cursor, block.startLine));
+    const rewritten = rewrittenByIndex.get(index);
+    if (rewritten) {
+      out.push(...rewritten.split('\n'));
+    } else {
+      out.push(...lines.slice(block.startLine, block.endLine));
+    }
+    cursor = block.endLine;
+  });
+
+  out.push(...lines.slice(cursor));
+  return out.join('\n').trim();
+}
+
 export async function generateLessonPlanServer(params: LessonPlanParams) {
   const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
 
@@ -113,6 +246,9 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
       - **Directions:** [clear student-facing directions]
       - **Total Points:** [reasonable point total]
     - Student Copy should include 6-8 questions/tasks that directly practice that day's objective.
+    - Every worksheet question/task must be fully text-based and answerable on paper without external visuals.
+    - NEVER use placeholders such as "(Picture of ...)", "[Insert image]", "see image", or "use the picture".
+    - If a visual would help, convert it into a clear written prompt instead.
     - Use school-ready, formal worksheet language and clear spacing between numbered items.
     - Keep question formatting simple and readable in plain markdown.
 `
@@ -130,6 +266,9 @@ export async function generateLessonPlanServer(params: LessonPlanParams) {
       - **Standard Alignment:** [brief standard/skill focus]
       - **Directions:** [clear student-facing directions]
       - **Total Points:** [reasonable point total]
+    - Every worksheet question/task must be fully text-based and answerable on paper without external visuals.
+    - NEVER use placeholders such as "(Picture of ...)", "[Insert image]", "see image", or "use the picture".
+    - If a visual would help, convert it into a clear written prompt instead.
     - Matching worksheet format:
       - Include "Terms" list with 6 numbered items.
       - Include "Definitions" list with 6 lettered items (A-F).
@@ -297,6 +436,8 @@ Formatting rules (strict):
 - Label items clearly: start bullets with a **Bold Label:** followed by content.
 - For timing in procedures, format as: **[X min]** at the start of each step.
 - Keep worksheet questions on separate lines.
+- Worksheets must be self-contained and printable with text only.
+- Do NOT reference external visuals or use placeholders like "(Picture of ...)".
 - For fill-in-the-blank, use at least 12 underscores: ____________.
 - For multiple choice, options must be on separate lines prefixed with A), B), C), D).
 
@@ -314,42 +455,74 @@ ${sectionStructure}
 <IMAGE_PROMPT>...</IMAGE_PROMPT>
   `;
 
-  const generateWithModel = async (model: string) =>
+  const modelCandidates = getLessonModelCandidates();
+  const generateWithModel = async (model: string, contents: string, temperature = 0.45) =>
     ai.models.generateContent({
       model,
-      contents: prompt,
+      contents,
       config: {
-        temperature: 0.45,
+        temperature,
       },
     });
 
-  const modelCandidates = getLessonModelCandidates();
-  let response: Awaited<ReturnType<typeof generateWithModel>> | null = null;
-  let lastError: unknown;
+  const generateWithFallback = async (
+    contents: string,
+    opts?: { temperature?: number; preferredModel?: string },
+  ) => {
+    const orderedModels = opts?.preferredModel
+      ? [opts.preferredModel, ...modelCandidates.filter((model) => model !== opts.preferredModel)]
+      : modelCandidates;
 
-  for (const model of modelCandidates) {
-    try {
-      response = await generateWithModel(model);
-      break;
-    } catch (error) {
-      lastError = error;
-      const hasNextModel = model !== modelCandidates[modelCandidates.length - 1];
-      if (hasNextModel && shouldRetryWithDifferentModel(error)) {
-        console.warn(`Lesson model "${model}" failed. Trying the next configured model.`);
-        continue;
+    let response: Awaited<ReturnType<typeof generateWithModel>> | null = null;
+    let lastError: unknown;
+
+    for (const model of orderedModels) {
+      try {
+        response = await generateWithModel(model, contents, opts?.temperature ?? 0.45);
+        break;
+      } catch (error) {
+        lastError = error;
+        const hasNextModel = model !== orderedModels[orderedModels.length - 1];
+        if (hasNextModel && shouldRetryWithDifferentModel(error)) {
+          console.warn(`Lesson model "${model}" failed. Trying the next configured model.`);
+          continue;
+        }
+        throw error;
       }
-      throw error;
+    }
+
+    if (!response) {
+      if (lastError instanceof Error) throw lastError;
+      throw new Error('Failed to generate lesson plan.');
+    }
+
+    return response;
+  };
+
+  const response = await generateWithFallback(prompt, { temperature: 0.45 });
+  let text = response.text || '';
+
+  if (includeWorksheets && text.trim()) {
+    const worksheetBlocks = extractWorksheetBlocks(text);
+    const hasWorksheetPlaceholders = worksheetBlocks.some((block) => worksheetHasPlaceholder(block.content));
+
+    if (worksheetBlocks.length > 0 && hasWorksheetPlaceholders) {
+      console.warn('Detected worksheet placeholders. Running worksheet quality rewrite.');
+      const rewritePrompt = buildWorksheetRewritePrompt(worksheetBlocks, params);
+
+      try {
+        const rewrittenResponse = await generateWithFallback(rewritePrompt, { temperature: 0.2 });
+        const rewrittenBlocks = parseRewrittenWorksheetBlocks(rewrittenResponse.text || '');
+        if (rewrittenBlocks.size > 0) {
+          text = applyRewrittenWorksheetBlocks(text, worksheetBlocks, rewrittenBlocks);
+        } else {
+          console.warn('Worksheet rewrite response could not be parsed. Keeping original worksheet content.');
+        }
+      } catch (error) {
+        console.warn('Worksheet rewrite failed. Keeping original worksheet content.', error);
+      }
     }
   }
-
-  if (!response) {
-    if (lastError instanceof Error) {
-      throw lastError;
-    }
-    throw new Error('Failed to generate lesson plan.');
-  }
-
-  const text = response.text || '';
   let imagePrompt: string | null = null;
   const match = text.match(/<IMAGE_PROMPT>([\s\S]*?)<\/IMAGE_PROMPT>/);
   if (match && match[1]) {

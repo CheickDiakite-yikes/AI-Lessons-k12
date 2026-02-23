@@ -1524,7 +1524,7 @@ Design requirements:
           </div>
 
           {/* Duration & Start Date */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 sm:gap-3">
             <div className="space-y-2">
               <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Duration (mins)</label>
               <input 
@@ -1536,12 +1536,15 @@ Design requirements:
             </div>
             <div className="space-y-2">
               <label className="block font-bold text-[var(--color-deep-ink)] uppercase tracking-wider text-base md:text-sm">Start Date</label>
-              <input 
-                type="date" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]"
-              />
+              <div className="relative">
+                <input 
+                  type="date" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-[var(--color-crisp-page)] border-2 border-[var(--color-deep-ink)] rounded-none p-3 md:p-3 font-sans text-lg md:text-base focus:outline-none focus:border-[var(--color-sage-green)] focus:ring-2 focus:ring-[var(--color-sage-green)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] appearance-none"
+                  style={{ minHeight: '3.5rem' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -1590,14 +1593,14 @@ Design requirements:
           )}
 
           {/* Auto Generate Toggle */}
-          <div className="flex items-center justify-between p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)]">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 md:w-5 md:h-5 text-[var(--color-gold-star)]" />
-              <span className="font-bold text-[var(--color-deep-ink)] text-base md:text-sm">Auto-Generate Objectives</span>
+          <div className="flex items-center justify-between p-4 border-2 border-[var(--color-deep-ink)] bg-[var(--color-crisp-page)] shadow-[2px_2px_0px_0px_var(--color-deep-ink)] gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="w-6 h-6 md:w-5 md:h-5 text-[var(--color-gold-star)] flex-shrink-0" />
+              <span className="font-bold text-[var(--color-deep-ink)] text-base md:text-sm truncate">Auto-Generate Objectives</span>
             </div>
             <button 
               onClick={() => setAutoGenerate(!autoGenerate)}
-              className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors ${autoGenerate ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
+              className={`w-14 h-7 md:w-12 md:h-6 rounded-full border-2 border-[var(--color-deep-ink)] relative transition-colors flex-shrink-0 ${autoGenerate ? 'bg-[var(--color-sage-green)]' : 'bg-[var(--color-concrete-light)]'}`}
             >
               <div className={`absolute top-0.5 left-0.5 w-5 h-5 md:w-4 md:h-4 rounded-full bg-white border-2 border-[var(--color-deep-ink)] transition-transform ${autoGenerate ? 'translate-x-7 md:translate-x-6' : 'translate-x-0'}`} />
             </button>
